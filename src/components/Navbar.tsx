@@ -36,10 +36,7 @@ const Navbar = () => {
             to="/"
             className="flex items-center space-x-2 text-2xl font-bold text-primary transition-all duration-300 hover:opacity-90"
           >
-            <div className="relative flex items-center">
-              <span className="relative z-10">Sponofy</span>
-              <div className="absolute -bottom-1 h-3 w-full bg-secondary dark:bg-accent rounded-md -z-0 transform -skew-x-12"></div>
-            </div>
+            <span className="relative z-10">Sponofy</span>
           </Link>
 
           {/* Desktop Navigation */}
