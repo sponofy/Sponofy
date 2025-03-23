@@ -11,7 +11,7 @@ export function ThemeToggle() {
       variant="ghost"
       size="icon"
       onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-      className="w-10 h-10 rounded-full transition-all duration-300 hover:bg-secondary"
+      className="w-10 h-10 rounded-full transition-all duration-300 hover:green-gradient"
     >
       <Sun
         className={`h-5 w-5 transition-all duration-300 ${

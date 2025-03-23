@@ -64,6 +64,9 @@ export default {
           ring: "hsl(var(--sidebar-ring))"
         }
       },
+      backgroundImage: {
+        'green-gradient': 'linear-gradient(to right, #57cc99, #80ed99)',
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",

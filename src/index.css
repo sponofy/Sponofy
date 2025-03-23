@@ -18,15 +18,15 @@
     --primary: 265 89% 66%;
     --primary-foreground: 0 0% 100%;
 
-    /* Light purple secondary color */
-    --secondary: 260 60% 96%;
-    --secondary-foreground: 265 89% 50%;
+    /* Mint green secondary color with gradient */
+    --secondary: 154 60% 57%;
+    --secondary-foreground: 240 10% 3.9%;
 
     --muted: 240 4.8% 95.9%;
     --muted-foreground: 240 3.8% 46.1%;
 
-    --accent: 273 80% 97%;
-    --accent-foreground: 265 89% 60%;
+    --accent: 154 80% 97%;
+    --accent-foreground: 154 70% 40%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
@@ -61,14 +61,14 @@
     --primary: 265 89% 70%;
     --primary-foreground: 0 0% 100%;
 
-    /* Dark purple secondary color */
-    --secondary: 240 3.7% 15.9%;
+    /* Mint green secondary color for dark mode */
+    --secondary: 154 50% 40%;
     --secondary-foreground: 0 0% 98%;
 
     --muted: 240 3.7% 15.9%;
     --muted-foreground: 240 5% 64.9%;
 
-    --accent: 265 50% 20%;
+    --accent: 154 40% 20%;
     --accent-foreground: 0 0% 98%;
 
     --destructive: 0 62.8% 30.6%;
@@ -118,6 +118,19 @@
 
   .text-gradient {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-500 dark:from-primary dark:to-purple-400;
+  }
+
+  /* Green gradient utilities */
+  .green-gradient {
+    @apply bg-gradient-to-r from-[#57cc99] to-[#80ed99];
+  }
+
+  .green-gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-[#57cc99] to-[#80ed99];
+  }
+
+  .green-gradient-hover {
+    @apply hover:bg-gradient-to-r hover:from-[#57cc99] hover:to-[#80ed99];
   }
 
   .animate-delay-100 {
