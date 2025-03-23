@@ -8,6 +8,7 @@ import Services from "@/components/Services";
 import SponsorshipForms from "@/components/SponsorshipForms";
 import FAQ from "@/components/FAQ";
 import Footer from "@/components/Footer";
+import { Handshake, Rocket, Target } from "lucide-react";
 
 const Index = () => {
   useEffect(() => {
@@ -40,33 +41,72 @@ const Index = () => {
             </div>
 
             <div className="container px-4 md:px-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                <div className="order-2 lg:order-1">
-                  <h2 className="text-3xl md:text-4xl font-bold mb-6">
-                    About <span className="text-gradient">Sponofy</span>
-                  </h2>
-                  <p className="text-lg text-foreground/80 mb-6">
-                    Sponofy was founded with a simple mission: to simplify the sponsorship process and create meaningful connections between sponsors and those seeking sponsorship.
-                  </p>
-                  <p className="text-lg text-foreground/80 mb-6">
-                    We understand the challenges faced by both sides of the sponsorship equation. Projects and events struggle to find the right sponsors, while companies find it difficult to discover opportunities that align with their values and goals.
-                  </p>
-                  <p className="text-lg text-foreground/80">
-                    Our platform bridges this gap by using sophisticated matching algorithms and a streamlined process that makes finding the perfect sponsorship partnership easier than ever before.
-                  </p>
-                </div>
-                
-                <div className="order-1 lg:order-2">
-                  <div className="relative">
-                    <div className="glass-card aspect-video rounded-2xl overflow-hidden shadow-2xl shadow-primary/10">
-                      <div className="bg-slate-100 dark:bg-slate-800 h-full flex items-center justify-center">
-                        <p className="text-xl font-medium text-foreground/60">About Us Image</p>
-                      </div>
-                    </div>
-                    <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-primary/10 rounded-full blur-xl"></div>
-                    <div className="absolute -top-6 -left-6 w-32 h-32 bg-blue-300/10 dark:bg-blue-700/10 rounded-full blur-xl"></div>
+              <div className="text-center mb-12">
+                <h2 className="text-3xl md:text-4xl font-bold">
+                  About <span className="text-gradient">Sponofy</span>
+                </h2>
+                <p className="text-lg text-foreground/80 mt-4 max-w-3xl mx-auto">
+                  Sponofy simplifies sponsorships by connecting the right sponsors with the perfect opportunities through our innovative matching platform.
+                </p>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                {/* Feature 1 */}
+                <motion.div 
+                  className="flex flex-col items-center text-center p-6 rounded-xl hover:bg-gradient-to-b hover:from-primary/5 hover:to-transparent transition-all duration-300 group"
+                  whileHover={{ y: -10 }}
+                  transition={{ type: "spring", stiffness: 300 }}
+                >
+                  <div className="relative mb-6 p-4 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors duration-300">
+                    <Handshake 
+                      className="h-12 w-12 text-primary group-hover:text-primary-foreground transition-colors duration-300" 
+                      strokeWidth={1.5}
+                    />
+                    <div className="absolute inset-0 rounded-full bg-primary/5 group-hover:scale-110 transition-transform duration-500 opacity-0 group-hover:opacity-100"></div>
                   </div>
-                </div>
+                  <h3 className="text-xl font-semibold mb-3 group-hover:text-primary transition-colors duration-300">Meaningful Connections</h3>
+                  <p className="text-foreground/70 group-hover:text-foreground/90 transition-colors duration-300">
+                    We create valuable partnerships between sponsors and seekers based on shared goals and values.
+                  </p>
+                </motion.div>
+
+                {/* Feature 2 */}
+                <motion.div 
+                  className="flex flex-col items-center text-center p-6 rounded-xl hover:bg-gradient-to-b hover:from-primary/5 hover:to-transparent transition-all duration-300 group"
+                  whileHover={{ y: -10 }}
+                  transition={{ type: "spring", stiffness: 300 }}
+                >
+                  <div className="relative mb-6 p-4 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors duration-300">
+                    <Target 
+                      className="h-12 w-12 text-primary group-hover:text-primary-foreground transition-colors duration-300" 
+                      strokeWidth={1.5}
+                    />
+                    <div className="absolute inset-0 rounded-full bg-primary/5 group-hover:scale-110 transition-transform duration-500 opacity-0 group-hover:opacity-100"></div>
+                  </div>
+                  <h3 className="text-xl font-semibold mb-3 group-hover:text-primary transition-colors duration-300">Smart Matching</h3>
+                  <p className="text-foreground/70 group-hover:text-foreground/90 transition-colors duration-300">
+                    Our algorithms pair sponsors with opportunities that align perfectly with their brand objectives.
+                  </p>
+                </motion.div>
+
+                {/* Feature 3 */}
+                <motion.div 
+                  className="flex flex-col items-center text-center p-6 rounded-xl hover:bg-gradient-to-b hover:from-primary/5 hover:to-transparent transition-all duration-300 group"
+                  whileHover={{ y: -10 }}
+                  transition={{ type: "spring", stiffness: 300 }}
+                >
+                  <div className="relative mb-6 p-4 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors duration-300">
+                    <Rocket 
+                      className="h-12 w-12 text-primary group-hover:text-primary-foreground transition-colors duration-300" 
+                      strokeWidth={1.5}
+                    />
+                    <div className="absolute inset-0 rounded-full bg-primary/5 group-hover:scale-110 transition-transform duration-500 opacity-0 group-hover:opacity-100"></div>
+                  </div>
+                  <h3 className="text-xl font-semibold mb-3 group-hover:text-primary transition-colors duration-300">Streamlined Process</h3>
+                  <p className="text-foreground/70 group-hover:text-foreground/90 transition-colors duration-300">
+                    We simplify the entire sponsorship journey from discovery to agreement, saving time and effort.
+                  </p>
+                </motion.div>
               </div>
             </div>
           </motion.section>
