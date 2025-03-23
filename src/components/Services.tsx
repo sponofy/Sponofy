@@ -3,8 +3,8 @@ import { motion } from "framer-motion";
 import { 
   Handshake, 
   Users, 
-  LineChart, 
   Shield, 
+  LineChart, 
   Clock, 
   Zap
 } from "lucide-react";
@@ -82,17 +82,23 @@ const Services = () => {
           {serviceItems.map((service, index) => (
             <motion.div
               key={index}
-              className="glass-card p-8 rounded-2xl h-full flex flex-col items-center text-center transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
+              className="relative overflow-hidden rounded-2xl h-full transition-all duration-300 group"
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: service.delay }}
             >
-              <div className="w-16 h-16 mb-6 rounded-full bg-primary/10 flex items-center justify-center">
-                <service.icon className="h-8 w-8 text-primary" />
+              {/* Background fill animation */}
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/80 to-secondary/80 transform translate-y-full transition-transform duration-500 ease-in-out group-hover:translate-y-0 rounded-2xl z-0"></div>
+              
+              {/* Card content */}
+              <div className="glass-card p-8 rounded-2xl h-full flex flex-col items-center text-center relative z-10 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-transparent group-hover:bg-transparent border border-white/20 group-hover:border-white/40">
+                <div className="w-16 h-16 mb-6 rounded-full bg-primary/10 group-hover:bg-white/10 flex items-center justify-center transition-all duration-300">
+                  <service.icon className="h-8 w-8 text-primary group-hover:text-white transition-colors duration-300" />
+                </div>
+                <h3 className="text-xl font-semibold mb-3 group-hover:text-white transition-colors duration-300">{service.title}</h3>
+                <p className="text-foreground/70 group-hover:text-white/90 flex-grow transition-colors duration-300">{service.description}</p>
               </div>
-              <h3 className="text-xl font-semibold mb-3">{service.title}</h3>
-              <p className="text-foreground/70 flex-grow">{service.description}</p>
             </motion.div>
           ))}
         </div>
