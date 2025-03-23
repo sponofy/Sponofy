@@ -95,7 +95,7 @@ const SponsorshipForms = () => {
             
             <TabsContent value="need-sponsorship" className="mt-0">
               <Card className="glass-card border-0">
-                <CardHeader>
+                <CardHeader className="text-left">
                   <CardTitle>Request Sponsorship</CardTitle>
                   <CardDescription>
                     Fill out this form if you're looking for sponsors for your project or event.
@@ -104,22 +104,22 @@ const SponsorshipForms = () => {
                 <CardContent>
                   <form id="client-form" onSubmit={handleClientSubmit} className="space-y-6">
                     <div className="grid gap-6 md:grid-cols-2">
-                      <div className="space-y-2">
+                      <div className="space-y-2 text-left">
                         <Label htmlFor="client-name">Full Name</Label>
                         <Input id="client-name" placeholder="John Doe" required />
                       </div>
-                      <div className="space-y-2">
+                      <div className="space-y-2 text-left">
                         <Label htmlFor="client-email">Email</Label>
                         <Input id="client-email" type="email" placeholder="john@example.com" required />
                       </div>
                     </div>
                     
                     <div className="grid gap-6 md:grid-cols-2">
-                      <div className="space-y-2">
+                      <div className="space-y-2 text-left">
                         <Label htmlFor="project-name">Project/Event Name</Label>
                         <Input id="project-name" placeholder="Annual Tech Conference" required />
                       </div>
-                      <div className="space-y-2">
+                      <div className="space-y-2 text-left">
                         <Label htmlFor="client-category">Category</Label>
                         <Select required>
                           <SelectTrigger>
@@ -137,12 +137,12 @@ const SponsorshipForms = () => {
                       </div>
                     </div>
                     
-                    <div className="space-y-2">
+                    <div className="space-y-2 text-left">
                       <Label htmlFor="client-amount">Sponsorship Amount Needed ($)</Label>
                       <Input id="client-amount" type="number" placeholder="5000" required />
                     </div>
                     
-                    <div className="space-y-2">
+                    <div className="space-y-2 text-left">
                       <Label htmlFor="client-description">Project Description</Label>
                       <Textarea 
                         id="client-description" 
@@ -152,7 +152,7 @@ const SponsorshipForms = () => {
                       />
                     </div>
                     
-                    <div className="space-y-2">
+                    <div className="space-y-2 text-left">
                       <Label htmlFor="client-benefits">Sponsorship Benefits</Label>
                       <Textarea 
                         id="client-benefits" 
@@ -163,11 +163,11 @@ const SponsorshipForms = () => {
                     </div>
                   </form>
                 </CardContent>
-                <CardFooter>
+                <CardFooter className="flex justify-start">
                   <Button 
                     type="submit" 
                     form="client-form" 
-                    className="w-full bg-primary hover:bg-primary/90"
+                    className="w-full md:w-auto bg-primary hover:bg-primary/90"
                     disabled={isSubmitting}
                   >
                     {isSubmitting ? "Submitting..." : "Submit Request"}
@@ -178,7 +178,7 @@ const SponsorshipForms = () => {
             
             <TabsContent value="give-sponsorship" className="mt-0">
               <Card className="glass-card border-0">
-                <CardHeader>
+                <CardHeader className="text-left">
                   <CardTitle>Offer Sponsorship</CardTitle>
                   <CardDescription>
                     Fill out this form if you're a company interested in sponsoring projects or events.
@@ -187,29 +187,29 @@ const SponsorshipForms = () => {
                 <CardContent>
                   <form id="company-form" onSubmit={handleCompanySubmit} className="space-y-6">
                     <div className="grid gap-6 md:grid-cols-2">
-                      <div className="space-y-2">
+                      <div className="space-y-2 text-left">
                         <Label htmlFor="company-name">Company Name</Label>
                         <Input id="company-name" placeholder="Acme Corporation" required />
                       </div>
-                      <div className="space-y-2">
+                      <div className="space-y-2 text-left">
                         <Label htmlFor="contact-person">Contact Person</Label>
                         <Input id="contact-person" placeholder="Jane Smith" required />
                       </div>
                     </div>
                     
                     <div className="grid gap-6 md:grid-cols-2">
-                      <div className="space-y-2">
+                      <div className="space-y-2 text-left">
                         <Label htmlFor="company-email">Email</Label>
                         <Input id="company-email" type="email" placeholder="jane@acmecorp.com" required />
                       </div>
-                      <div className="space-y-2">
+                      <div className="space-y-2 text-left">
                         <Label htmlFor="company-phone">Phone</Label>
                         <Input id="company-phone" placeholder="+1 (555) 123-4567" />
                       </div>
                     </div>
                     
                     <div className="grid gap-6 md:grid-cols-2">
-                      <div className="space-y-2">
+                      <div className="space-y-2 text-left">
                         <Label htmlFor="sponsor-category">Industry</Label>
                         <Select required>
                           <SelectTrigger>
@@ -225,13 +225,13 @@ const SponsorshipForms = () => {
                           </SelectContent>
                         </Select>
                       </div>
-                      <div className="space-y-2">
+                      <div className="space-y-2 text-left">
                         <Label htmlFor="sponsor-budget">Sponsorship Budget ($)</Label>
                         <Input id="sponsor-budget" type="number" placeholder="10000" required />
                       </div>
                     </div>
                     
-                    <div className="space-y-2">
+                    <div className="space-y-2 text-left">
                       <Label htmlFor="sponsor-interests">Sponsorship Interests</Label>
                       <Select required>
                         <SelectTrigger>
@@ -249,7 +249,7 @@ const SponsorshipForms = () => {
                       </Select>
                     </div>
                     
-                    <div className="space-y-2">
+                    <div className="space-y-2 text-left">
                       <Label htmlFor="sponsor-requirements">Sponsorship Requirements</Label>
                       <Textarea 
                         id="sponsor-requirements" 
@@ -259,7 +259,7 @@ const SponsorshipForms = () => {
                       />
                     </div>
                     
-                    <div className="space-y-2">
+                    <div className="space-y-2 text-left">
                       <Label htmlFor="sponsor-additional">Additional Information</Label>
                       <Textarea 
                         id="sponsor-additional" 
@@ -269,11 +269,11 @@ const SponsorshipForms = () => {
                     </div>
                   </form>
                 </CardContent>
-                <CardFooter>
+                <CardFooter className="flex justify-start">
                   <Button 
                     type="submit" 
                     form="company-form" 
-                    className="w-full bg-primary hover:bg-primary/90"
+                    className="w-full md:w-auto bg-primary hover:bg-primary/90"
                     disabled={isSubmitting}
                   >
                     {isSubmitting ? "Submitting..." : "Submit Offer"}
