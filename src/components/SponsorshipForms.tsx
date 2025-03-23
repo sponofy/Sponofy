@@ -59,7 +59,7 @@ const SponsorshipForms = () => {
       </div>
 
       <div className="container px-4 md:px-6">
-        <div className="text-left mb-16">
+        <div className="text-center mb-16">
           <motion.h2 
             className="text-3xl md:text-4xl font-bold mb-4"
             initial={{ opacity: 0, y: 20 }}
@@ -70,7 +70,7 @@ const SponsorshipForms = () => {
             <span className="text-gradient">Sponsorship</span> Forms
           </motion.h2>
           <motion.p 
-            className="text-lg text-foreground/80 max-w-2xl"
+            className="text-lg text-foreground/80 max-w-2xl mx-auto"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -167,7 +167,8 @@ const SponsorshipForms = () => {
                   <Button 
                     type="submit" 
                     form="client-form" 
-                    className="w-full md:w-auto bg-primary hover:bg-primary/90"
+                    className="w-full"
+                    variant="outline"
                     disabled={isSubmitting}
                   >
                     {isSubmitting ? "Submitting..." : "Submit Request"}
@@ -273,7 +274,8 @@ const SponsorshipForms = () => {
                   <Button 
                     type="submit" 
                     form="company-form" 
-                    className="w-full md:w-auto bg-primary hover:bg-primary/90"
+                    className="w-full"
+                    variant="outline"
                     disabled={isSubmitting}
                   >
                     {isSubmitting ? "Submitting..." : "Submit Offer"}
