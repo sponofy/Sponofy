@@ -5,7 +5,7 @@
 
 @layer base {
   :root {
-    --background: 240 20% 99%;
+    --background: 0 0% 100%;
     --foreground: 240 10% 3.9%;
 
     --card: 0 0% 100%;
@@ -14,26 +14,26 @@
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
 
-    /* Purple primary color */
-    --primary: 265 89% 66%;
+    /* Teal primary color */
+    --primary: 163 94% 24%;
     --primary-foreground: 0 0% 100%;
 
-    /* Mint green secondary color with gradient */
-    --secondary: 154 60% 57%;
-    --secondary-foreground: 240 10% 3.9%;
+    /* Soft teal secondary color */
+    --secondary: 160 84% 39%;
+    --secondary-foreground: 0 0% 100%;
 
     --muted: 240 4.8% 95.9%;
     --muted-foreground: 240 3.8% 46.1%;
 
-    --accent: 154 80% 97%;
-    --accent-foreground: 154 70% 40%;
+    --accent: 142 77% 73%;
+    --accent-foreground: 163 94% 24%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
 
     --border: 240 5.9% 90%;
     --input: 240 5.9% 90%;
-    --ring: 265 89% 66%;
+    --ring: 163 94% 24%;
 
     --radius: 0.75rem;
 
@@ -57,18 +57,18 @@
     --popover: 240 10% 3.9%;
     --popover-foreground: 0 0% 98%;
 
-    /* Purple primary color (adjusted for dark mode) */
-    --primary: 265 89% 70%;
+    /* Teal primary color (dark mode) */
+    --primary: 163 60% 30%;
     --primary-foreground: 0 0% 100%;
 
-    /* Mint green secondary color for dark mode */
-    --secondary: 154 50% 40%;
+    /* Soft teal secondary color (dark mode) */
+    --secondary: 160 50% 25%;
     --secondary-foreground: 0 0% 98%;
 
     --muted: 240 3.7% 15.9%;
     --muted-foreground: 240 5% 64.9%;
 
-    --accent: 154 40% 20%;
+    --accent: 142 40% 30%;
     --accent-foreground: 0 0% 98%;
 
     --destructive: 0 62.8% 30.6%;
@@ -76,11 +76,11 @@
 
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
-    --ring: 265 89% 70%;
+    --ring: 163 60% 30%;
 
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 265 89% 70%;
+    --sidebar-primary: 163 60% 30%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 240 3.7% 15.9%;
     --sidebar-accent-foreground: 240 4.8% 95.9%;
@@ -117,20 +117,33 @@
   }
 
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-500 dark:from-primary dark:to-purple-400;
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary dark:from-primary dark:to-secondary;
   }
 
-  /* Green gradient utilities */
+  /* Teal gradient utilities */
+  .teal-gradient {
+    @apply bg-gradient-to-r from-[#13ae90] to-[#20d4a9];
+  }
+
+  .teal-gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-[#13ae90] to-[#20d4a9];
+  }
+
+  .teal-gradient-hover {
+    @apply hover:bg-gradient-to-r hover:from-[#13ae90] hover:to-[#20d4a9];
+  }
+
+  /* Green gradient utilities (keeping these for backward compatibility) */
   .green-gradient {
-    @apply bg-gradient-to-r from-[#57cc99] to-[#80ed99];
+    @apply bg-gradient-to-r from-[#13ae90] to-[#20d4a9];
   }
 
   .green-gradient-text {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-[#57cc99] to-[#80ed99];
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-[#13ae90] to-[#20d4a9];
   }
 
   .green-gradient-hover {
-    @apply hover:bg-gradient-to-r hover:from-[#57cc99] hover:to-[#80ed99];
+    @apply hover:bg-gradient-to-r hover:from-[#13ae90] hover:to-[#20d4a9];
   }
 
   .animate-delay-100 {

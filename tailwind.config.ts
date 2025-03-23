@@ -65,7 +65,8 @@ export default {
         }
       },
       backgroundImage: {
-        'green-gradient': 'linear-gradient(to right, #57cc99, #80ed99)',
+        'teal-gradient': 'linear-gradient(to right, #13ae90, #20d4a9)',
+        'green-gradient': 'linear-gradient(to right, #13ae90, #20d4a9)',
       },
       borderRadius: {
         lg: "var(--radius)",
