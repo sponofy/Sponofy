@@ -1,3 +1,4 @@
+
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,7 +33,7 @@ const Footer = () => {
             <p className="text-foreground/70">
               Connecting sponsors and clients for meaningful and impactful partnerships.
             </p>
-            <div className="flex justify-center space-x-4">
+            <div className="flex space-x-4">
               <a href="#" className="text-foreground/60 hover:text-primary" aria-label="Facebook">
                 <Facebook className="h-5 w-5" />
               </a>
@@ -48,7 +49,7 @@ const Footer = () => {
             </div>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-4 text-left">
             <h3 className="text-lg font-semibold">Quick Links</h3>
             <ul className="space-y-2">
               <li>
@@ -69,7 +70,7 @@ const Footer = () => {
             </ul>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-4 text-left">
             <h3 className="text-lg font-semibold">Contact Us</h3>
             <ul className="space-y-4">
               <li className="flex items-start">
@@ -87,7 +88,7 @@ const Footer = () => {
             </ul>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-4 text-left">
             <h3 className="text-lg font-semibold">Subscribe</h3>
             <p className="text-foreground/70">
               Stay updated with the latest sponsorship opportunities.
@@ -106,7 +107,7 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="border-t border-border pt-8 text-center text-foreground/60">
+        <div className="border-t border-border pt-8 text-left text-foreground/60">
           <p>© {new Date().getFullYear()} Sponofy. All rights reserved.</p>
           <div className="mt-2 space-x-4 text-sm">
             <Link to="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link>
