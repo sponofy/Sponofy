@@ -59,7 +59,7 @@ const SponsorshipForms = () => {
       </div>
 
       <div className="container px-4 md:px-6">
-        <div className="text-center mb-16">
+        <div className="text-left mb-16">
           <motion.h2 
             className="text-3xl md:text-4xl font-bold mb-4"
             initial={{ opacity: 0, y: 20 }}
@@ -70,7 +70,7 @@ const SponsorshipForms = () => {
             <span className="text-gradient">Sponsorship</span> Forms
           </motion.h2>
           <motion.p 
-            className="text-lg text-foreground/80 max-w-2xl mx-auto"
+            className="text-lg text-foreground/80 max-w-2xl"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
