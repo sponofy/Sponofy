@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,20 +22,17 @@ const Footer = () => {
     <footer className="bg-primary/10 dark:bg-primary/20 pt-16 pb-8 relative">
       <div className="container px-4 md:px-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 mb-16">
-          <div className="space-y-4">
+          <div className="space-y-4 text-left">
             <Link
               to="/"
               className="flex items-start text-2xl font-bold text-primary transition-all duration-300 hover:opacity-90"
             >
-              <div className="relative flex items-center">
-                <span className="relative z-10">Sponofy</span>
-                <div className="absolute -bottom-1 h-3 w-full bg-secondary dark:bg-accent rounded-md -z-0 transform -skew-x-12"></div>
-              </div>
+              <span>Sponofy</span>
             </Link>
             <p className="text-foreground/70">
               Connecting sponsors and clients for meaningful and impactful partnerships.
             </p>
-            <div className="flex space-x-4">
+            <div className="flex justify-center space-x-4">
               <a href="#" className="text-foreground/60 hover:text-primary" aria-label="Facebook">
                 <Facebook className="h-5 w-5" />
               </a>
