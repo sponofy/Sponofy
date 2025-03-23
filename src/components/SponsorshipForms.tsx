@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -92,23 +93,23 @@ const SponsorshipForms = () => {
           transition={{ duration: 0.6 }}
         >
           <Tabs defaultValue="need-sponsorship" className="w-full" onValueChange={handleTabChange}>
-            <div className="relative mb-12 flex justify-center">
-              <div className="relative w-full max-w-md overflow-hidden bg-muted/30 rounded-full p-1.5 shadow-inner">
+            <div className="flex justify-center mb-12">
+              <div className="relative w-full max-w-md bg-muted/30 rounded-full p-1.5 shadow-inner">
                 <div
                   className={`absolute inset-y-1.5 ${
                     activeTab === "need-sponsorship" ? "left-1.5 right-[calc(50%+1.5px)]" : "left-[calc(50%+1.5px)] right-1.5"
-                  } bg-gradient-to-r from-[#13ae90] to-[#20d4a9] rounded-full shadow-lg transition-all duration-300 ease-in-out`}
+                  } teal-gradient rounded-full shadow-lg transition-all duration-300 ease-in-out`}
                 />
-                <TabsList className="grid w-full grid-cols-2 relative z-10 bg-transparent rounded-full border-none">
+                <TabsList className="grid w-full grid-cols-2 relative z-10 bg-transparent rounded-full border-none h-12">
                   <TabsTrigger 
                     value="need-sponsorship" 
-                    className="text-base py-3 data-[state=active]:bg-transparent data-[state=active]:text-primary-foreground data-[state=active]:shadow-none transition-colors duration-300 rounded-full"
+                    className="text-base py-3 data-[state=active]:bg-transparent data-[state=active]:text-primary-foreground data-[state=active]:shadow-none transition-colors duration-300 rounded-full flex items-center justify-center"
                   >
                     Need Sponsorship
                   </TabsTrigger>
                   <TabsTrigger 
                     value="give-sponsorship" 
-                    className="text-base py-3 data-[state=active]:bg-transparent data-[state=active]:text-primary-foreground data-[state=active]:shadow-none transition-colors duration-300 rounded-full"
+                    className="text-base py-3 data-[state=active]:bg-transparent data-[state=active]:text-primary-foreground data-[state=active]:shadow-none transition-colors duration-300 rounded-full flex items-center justify-center"
                   >
                     Give Sponsorship
                   </TabsTrigger>
@@ -118,7 +119,7 @@ const SponsorshipForms = () => {
             
             <TabsContent value="need-sponsorship" className="mt-0">
               <Card className="glass-card border-0">
-                <CardHeader className="text-left">
+                <CardHeader className="text-center">
                   <CardTitle>Request Sponsorship</CardTitle>
                   <CardDescription>
                     Fill out this form if you're looking for sponsors for your project or event.
@@ -205,7 +206,7 @@ const SponsorshipForms = () => {
             
             <TabsContent value="give-sponsorship" className="mt-0">
               <Card className="glass-card border-0">
-                <CardHeader className="text-left">
+                <CardHeader className="text-center">
                   <CardTitle>Offer Sponsorship</CardTitle>
                   <CardDescription>
                     Fill out this form if you're a company interested in sponsoring projects or events.
