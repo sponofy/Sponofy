@@ -190,11 +190,14 @@ const SponsorshipForms = () => {
                   <Button 
                     type="submit" 
                     form="client-form" 
-                    className="w-full"
+                    className="w-full group relative overflow-hidden"
                     variant="outline"
                     disabled={isSubmitting}
                   >
-                    {isSubmitting ? "Submitting..." : "Submit Request"}
+                    <span className="relative z-10 transition-all duration-300 group-hover:text-white">
+                      {isSubmitting ? "Submitting..." : "Submit Request"}
+                    </span>
+                    <span className="absolute inset-0 bg-gradient-to-r from-[#13ae90] to-[#20d4a9] transform -translate-x-full group-hover:translate-x-0 transition-transform duration-300 z-0"></span>
                   </Button>
                 </CardFooter>
               </Card>
@@ -297,11 +300,14 @@ const SponsorshipForms = () => {
                   <Button 
                     type="submit" 
                     form="company-form" 
-                    className="w-full"
+                    className="w-full group relative overflow-hidden"
                     variant="outline"
                     disabled={isSubmitting}
                   >
-                    {isSubmitting ? "Submitting..." : "Submit Offer"}
+                    <span className="relative z-10 transition-all duration-300 group-hover:text-white">
+                      {isSubmitting ? "Submitting..." : "Submit Offer"}
+                    </span>
+                    <span className="absolute inset-0 bg-gradient-to-r from-[#13ae90] to-[#20d4a9] transform -translate-x-full group-hover:translate-x-0 transition-transform duration-300 z-0"></span>
                   </Button>
                 </CardFooter>
               </Card>
