@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SignUp as ClerkSignUp } from "@clerk/clerk-react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -7,6 +7,16 @@ import { ArrowLeft } from "lucide-react";
 
 const SignUp = () => {
   const [isLoading, setIsLoading] = useState(true);
+
+  // Use useEffect with a timeout to simulate the loading state
+  // since onLoad is not available in the current Clerk version
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1500);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-background via-background to-background/95">
@@ -75,7 +85,6 @@ const SignUp = () => {
                 signInUrl="/sign-in"
                 redirectUrl="/dashboard"
                 afterSignUpUrl="/dashboard"
-                onLoad={() => setIsLoading(false)}
               />
             </div>
           </motion.div>
