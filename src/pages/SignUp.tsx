@@ -68,7 +68,7 @@ const SignUp = () => {
               </div>
             )}
             
-            <div className={isLoading ? "opacity-0 h-0 overflow-hidden" : "opacity-100 transition-opacity duration-300"}>
+            <div className={isLoading ? "opacity-0 h-0 overflow-hidden" : "opacity-100 transition-opacity duration-300 px-4"}>
               <ClerkSignUp 
                 appearance={{
                   elements: {
