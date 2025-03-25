@@ -1,13 +1,17 @@
 
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ThemeToggle } from "./ui/theme-toggle";
 import { Button } from "@/components/ui/button";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LogIn } from "lucide-react";
+import { useUser, SignedIn, SignedOut, UserButton } from "@clerk/clerk-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { isSignedIn, user } = useUser();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -21,6 +25,10 @@ const Navbar = () => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  const handleBecomeAMember = () => {
+    navigate("/sign-in");
+  };
 
   return (
     <header
@@ -63,17 +71,52 @@ const Navbar = () => {
 
           <div className="hidden md:flex items-center space-x-4">
             <ThemeToggle />
-            <Button
-              asChild
-              className="bg-primary hover:bg-primary/90 text-white rounded-full"
-            >
-              <Link to="/login">Become a Member</Link>
-            </Button>
+            
+            <SignedIn>
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="flex items-center gap-4"
+              >
+                <Button
+                  asChild
+                  variant="outline"
+                  className="border-primary/30 hover:border-primary/60 transition-all duration-300"
+                >
+                  <Link to="/dashboard">Dashboard</Link>
+                </Button>
+                <UserButton afterSignOutUrl="/" />
+              </motion.div>
+            </SignedIn>
+            
+            <SignedOut>
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ type: "spring", stiffness: 400, damping: 17 }}
+              >
+                <Button
+                  className="bg-primary hover:bg-primary/90 text-white rounded-full group relative overflow-hidden"
+                  onClick={handleBecomeAMember}
+                >
+                  <span className="relative z-10 flex items-center">
+                    <LogIn className="mr-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                    Become a Member
+                  </span>
+                  <span className="absolute inset-0 bg-gradient-to-r from-secondary to-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-0"></span>
+                </Button>
+              </motion.div>
+            </SignedOut>
           </div>
 
           {/* Mobile Menu Button */}
           <div className="flex items-center space-x-2 md:hidden">
             <ThemeToggle />
+            
+            <SignedIn>
+              <UserButton afterSignOutUrl="/" />
+            </SignedIn>
+            
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="p-2 text-foreground/80 hover:text-primary transition-colors rounded-full"
@@ -89,53 +132,75 @@ const Navbar = () => {
       </div>
 
       {/* Mobile Menu */}
-      <div
-        className={`md:hidden fixed inset-0 z-40 bg-background/95 dark:bg-background/95 backdrop-blur-sm transform transition-transform duration-300 ease-in-out ${
-          isMobileMenuOpen ? "translate-x-0" : "translate-x-full"
-        }`}
-      >
-        <div className="flex flex-col p-8 space-y-8 h-full">
-          <div className="flex justify-end">
-            <button
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="p-2 text-foreground/80 hover:text-primary transition-colors rounded-full"
-            >
-              <X className="h-6 w-6" />
-            </button>
-          </div>
-          <nav className="flex flex-col space-y-6 items-center justify-center flex-grow">
-            <Link
-              to="/"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="text-2xl font-medium text-foreground/90 hover:text-primary transition-colors"
-            >
-              Home
-            </Link>
-            <Link
-              to="/#about"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="text-2xl font-medium text-foreground/90 hover:text-primary transition-colors"
-            >
-              About Us
-            </Link>
-            <Link
-              to="/#services"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="text-2xl font-medium text-foreground/90 hover:text-primary transition-colors"
-            >
-              Services
-            </Link>
-            <Button
-              asChild
-              className="mt-6 w-full max-w-xs bg-primary hover:bg-primary/90 text-white rounded-full"
-            >
-              <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>
-                Become a Member
-              </Link>
-            </Button>
-          </nav>
-        </div>
-      </div>
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            className="md:hidden fixed inset-0 z-40 bg-background/95 dark:bg-background/95 backdrop-blur-sm"
+            initial={{ opacity: 0, x: "100%" }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: "100%" }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+          >
+            <div className="flex flex-col p-8 space-y-8 h-full">
+              <div className="flex justify-end">
+                <button
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="p-2 text-foreground/80 hover:text-primary transition-colors rounded-full"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+              <nav className="flex flex-col space-y-6 items-center justify-center flex-grow">
+                <Link
+                  to="/"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="text-2xl font-medium text-foreground/90 hover:text-primary transition-colors"
+                >
+                  Home
+                </Link>
+                <Link
+                  to="/#about"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="text-2xl font-medium text-foreground/90 hover:text-primary transition-colors"
+                >
+                  About Us
+                </Link>
+                <Link
+                  to="/#services"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="text-2xl font-medium text-foreground/90 hover:text-primary transition-colors"
+                >
+                  Services
+                </Link>
+                
+                <SignedIn>
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="mt-6 w-full max-w-xs border-primary/30 hover:border-primary/60"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <Link to="/dashboard">Dashboard</Link>
+                  </Button>
+                </SignedIn>
+                
+                <SignedOut>
+                  <Button
+                    className="mt-6 w-full max-w-xs bg-primary hover:bg-primary/90 text-white rounded-full"
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      navigate("/sign-in");
+                    }}
+                  >
+                    <LogIn className="mr-2 h-5 w-5" />
+                    Become a Member
+                  </Button>
+                </SignedOut>
+              </nav>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </header>
   );
 };
