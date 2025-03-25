@@ -72,14 +72,22 @@ const SignUp = () => {
               <ClerkSignUp 
                 appearance={{
                   elements: {
-                    rootBox: "w-full mx-auto", // Added mx-auto to center the form
+                    rootBox: "w-full mx-auto",
                     card: "shadow-none p-0 w-full",
-                    headerTitle: "hidden",
-                    headerSubtitle: "hidden",
-                    socialButtonsBlockButton: "border border-gray-300 dark:border-gray-700 hover:border-primary dark:hover:border-primary",
-                    formFieldLabel: "text-foreground",
-                    formButtonPrimary: "bg-primary hover:bg-primary/90",
-                    footerActionLink: "text-primary hover:text-primary/90"
+                    headerTitle: "text-2xl font-semibold text-center mb-2",
+                    headerSubtitle: "text-center text-gray-600 dark:text-gray-400 mb-4",
+                    socialButtonsBlockButton: "border border-gray-300 dark:border-gray-700 hover:border-primary dark:hover:border-primary rounded-md py-3 px-4",
+                    socialButtonsProviderIcon: "w-5 h-5 mr-2",
+                    dividerRow: "my-6",
+                    dividerText: "text-gray-500 px-2",
+                    formFieldLabel: "text-left block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1",
+                    formFieldInput: "w-full rounded-md border border-gray-300 dark:border-gray-700 py-3 px-4 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary focus:border-transparent",
+                    formButtonPrimary: "w-full flex justify-center items-center text-center py-3 px-4 rounded-md bg-gray-800 hover:bg-gray-700 text-white font-medium transition-colors",
+                    footerActionText: "text-sm text-gray-600 dark:text-gray-400",
+                    footerActionLink: "text-sm text-primary hover:text-primary/90 font-medium",
+                    identityPreview: "border border-gray-300 dark:border-gray-700 rounded-lg p-4",
+                    identityPreviewText: "text-gray-700 dark:text-gray-300",
+                    identityPreviewEditButton: "text-primary hover:text-primary/90",
                   },
                 }}
                 signInUrl="/sign-in"
