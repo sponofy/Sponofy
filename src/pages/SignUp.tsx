@@ -35,7 +35,7 @@ const SignUp = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="w-full max-w-md"
+          className="w-full max-w-xl" // Increased from max-w-md to max-w-xl
         >
           <div className="text-center mb-8">
             <motion.h1 
@@ -60,7 +60,7 @@ const SignUp = () => {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.4, duration: 0.5 }}
-            className="p-6 rounded-xl shadow-xl bg-white dark:bg-gray-950/70 border border-white/20"
+            className="p-8 rounded-xl shadow-xl bg-white dark:bg-gray-950/70 border border-white/20"
           >
             {isLoading && (
               <div className="flex justify-center items-center py-12">
@@ -72,8 +72,8 @@ const SignUp = () => {
               <ClerkSignUp 
                 appearance={{
                   elements: {
-                    rootBox: "w-full",
-                    card: "shadow-none p-0",
+                    rootBox: "w-full mx-auto", // Added mx-auto to center the form
+                    card: "shadow-none p-0 w-full",
                     headerTitle: "hidden",
                     headerSubtitle: "hidden",
                     socialButtonsBlockButton: "border border-gray-300 dark:border-gray-700 hover:border-primary dark:hover:border-primary",
