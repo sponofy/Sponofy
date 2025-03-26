@@ -41,7 +41,7 @@ const AuthDialog = ({ isOpen, onOpenChange, initialView = "signIn" }: AuthDialog
               <TabsTrigger value="signUp">Sign Up</TabsTrigger>
             </TabsList>
             
-            <div className="px-4 py-4">
+            <div className="px-6 py-6">
               <TabsContent value="signIn" className="mt-0 p-0">
                 {isLoading && (
                   <div className="flex justify-center items-center py-12">
@@ -70,6 +70,10 @@ const AuthDialog = ({ isOpen, onOpenChange, initialView = "signIn" }: AuthDialog
                         footerActionLink: "text-sm text-primary hover:text-primary/90 font-medium",
                         formField: "mb-4",
                         form: "space-y-4",
+                        formFieldAction: "text-sm text-primary hover:text-primary/90 font-medium",
+                        formFieldInputShowPasswordButton: "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200",
+                        main: "mx-2", // Added margin inside main container
+                        footer: "mt-4 mx-2", // Added margin inside footer
                       },
                     }}
                     redirectUrl="/dashboard"
@@ -106,6 +110,10 @@ const AuthDialog = ({ isOpen, onOpenChange, initialView = "signIn" }: AuthDialog
                         footerActionLink: "text-sm text-primary hover:text-primary/90 font-medium",
                         formField: "mb-4",
                         form: "space-y-4",
+                        formFieldAction: "text-sm text-primary hover:text-primary/90 font-medium",
+                        formFieldInputShowPasswordButton: "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200",
+                        main: "mx-2", // Added margin inside main container
+                        footer: "mt-4 mx-2", // Added margin inside footer
                       },
                     }}
                     redirectUrl="/dashboard"
