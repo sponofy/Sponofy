@@ -7,6 +7,7 @@ import Hero from "@/components/Hero";
 import Services from "@/components/Services";
 import SponsorshipForms from "@/components/SponsorshipForms";
 import FAQ from "@/components/FAQ";
+import Testimonials from "@/components/Testimonials";
 import Footer from "@/components/Footer";
 import { Handshake, Rocket, Target } from "lucide-react";
 
@@ -114,6 +115,7 @@ const Index = () => {
           <Services />
           <SponsorshipForms />
           <FAQ />
+          <Testimonials />
         </main>
         
         <Footer />
