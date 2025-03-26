@@ -7,13 +7,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/use-toast";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from "@/components/ui/drawer";
 
 interface Message {
   id: number;
@@ -44,7 +37,7 @@ If asked about topics outside of this scope, politely redirect the conversation 
 Keep responses concise, friendly, and informative.
 `;
 
-type ChatBotDisplayMode = "floating" | "window" | "drawer";
+type ChatBotDisplayMode = "floating" | "window";
 
 const ChatBot = () => {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
@@ -265,14 +258,6 @@ const ChatBot = () => {
                 title="Open in window"
               >
                 <Maximize2 className="h-4 w-4" />
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="h-8 w-8 p-0 text-primary-foreground hover:text-white hover:bg-primary/80" 
-                onClick={() => setIsMinimized(true)}
-              >
-                <Minimize2 className="h-4 w-4" />
               </Button>
               <Button 
                 variant="ghost" 
