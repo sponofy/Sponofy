@@ -102,32 +102,38 @@ const Testimonials = () => {
             <CarouselContent className="-ml-2 md:-ml-4">
               {testimonials.map((testimonial) => (
                 <CarouselItem key={testimonial.id} className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3">
-                  <div className="p-1 h-full">
-                    <Card className="border border-primary/10 bg-card/40 backdrop-blur-sm shadow-md hover:shadow-lg transition-shadow duration-300 h-full">
+                  <motion.div 
+                    className="p-1 h-full"
+                    whileHover={{ 
+                      scale: 1.03,
+                      transition: { duration: 0.2 }
+                    }}
+                  >
+                    <Card className="border border-primary/10 bg-card/40 backdrop-blur-sm shadow-md hover:shadow-lg hover:border-primary/30 transition-all duration-300 h-full group">
                       <CardContent className="p-6 flex flex-col h-full">
-                        <div className="mb-4 text-primary/80">
-                          <Quote className="h-8 w-8 opacity-50" />
+                        <div className="mb-4 text-primary/80 group-hover:text-primary transition-colors duration-300">
+                          <Quote className="h-8 w-8 opacity-50 group-hover:opacity-80 transition-opacity duration-300" />
                         </div>
-                        <p className="text-foreground/80 italic mb-6 flex-grow">
+                        <p className="text-foreground/80 italic mb-6 flex-grow group-hover:text-foreground transition-colors duration-300">
                           "{testimonial.quote}"
                         </p>
                         <div className="flex items-center mt-auto">
-                          <Avatar className="h-12 w-12 border-2 border-primary/20">
+                          <Avatar className="h-12 w-12 border-2 border-primary/20 group-hover:border-primary/40 transition-all duration-300">
                             <AvatarImage src={testimonial.avatar} alt={testimonial.name} />
-                            <AvatarFallback className="bg-primary/10 text-primary font-medium">
+                            <AvatarFallback className="bg-primary/10 text-primary font-medium group-hover:bg-primary/20 transition-colors duration-300">
                               {testimonial.name.split(' ').map(n => n[0]).join('')}
                             </AvatarFallback>
                           </Avatar>
                           <div className="ml-4">
-                            <h4 className="font-semibold">{testimonial.name}</h4>
-                            <p className="text-sm text-foreground/70">
+                            <h4 className="font-semibold group-hover:text-primary transition-colors duration-300">{testimonial.name}</h4>
+                            <p className="text-sm text-foreground/70 group-hover:text-foreground/90 transition-colors duration-300">
                               {testimonial.role}, {testimonial.company}
                             </p>
                           </div>
                         </div>
                       </CardContent>
                     </Card>
-                  </div>
+                  </motion.div>
                 </CarouselItem>
               ))}
             </CarouselContent>
