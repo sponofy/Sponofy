@@ -20,7 +20,7 @@ const AuthDialog = ({ isOpen, onOpenChange, initialView = "signIn" }: AuthDialog
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md p-6 overflow-hidden">
+      <DialogContent className="sm:max-w-[380px] p-6 overflow-hidden">
         <DialogClose className="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100">
           <X className="h-4 w-4" />
           <span className="sr-only">Close</span>
