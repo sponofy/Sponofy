@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { SendHorizontal, Bot, X, Minimize2, Maximize2 } from "lucide-react";
@@ -7,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/use-toast";
+import { useChat } from "@/hooks/use-chat";
 
 interface Message {
   id: number;
@@ -47,6 +47,7 @@ const ChatBot = () => {
   const [displayMode, setDisplayMode] = useState<ChatBotDisplayMode>("floating");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const { sendMessage } = useChat(sponsorshipContext);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -66,72 +67,22 @@ const ChatBot = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch(
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=AIzaSyDaoLry4Krvdv4LLdWsnC_uqU1fk4D-aQk",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            contents: [
-              {
-                parts: [
-                  { text: sponsorshipContext },
-                  { text: "Previous messages:\n" + messages.map(m => `${m.role}: ${m.content}`).join("\n") },
-                  { text: "User: " + userMessage.content }
-                ]
-              }
-            ],
-            generationConfig: {
-              temperature: 0.7,
-              topK: 40,
-              topP: 0.95,
-              maxOutputTokens: 1000,
-            },
-            safetySettings: [
-              {
-                category: "HARM_CATEGORY_HARASSMENT",
-                threshold: "BLOCK_MEDIUM_AND_ABOVE"
-              },
-              {
-                category: "HARM_CATEGORY_HATE_SPEECH",
-                threshold: "BLOCK_MEDIUM_AND_ABOVE"
-              },
-              {
-                category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-                threshold: "BLOCK_MEDIUM_AND_ABOVE"
-              },
-              {
-                category: "HARM_CATEGORY_DANGEROUS_CONTENT",
-                threshold: "BLOCK_MEDIUM_AND_ABOVE"
-              }
-            ]
-          })
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`Error: ${response.status}`);
-      }
-
-      const data = await response.json();
+      const botResponse = await sendMessage(input.trim(), messages);
       
-      let botReply = "I'm sorry, I couldn't process your request.";
-      if (data.candidates && data.candidates[0]?.content?.parts?.length > 0) {
-        botReply = data.candidates[0].content.parts[0].text || botReply;
+      if (botResponse) {
+        setMessages(prev => [...prev, botResponse]);
+      } else {
+        setMessages(prev => [
+          ...prev,
+          {
+            id: Date.now(),
+            role: "assistant",
+            content: "I'm currently having trouble connecting to my knowledge base. Please try again in a moment, or ask a different question about sponsorships."
+          }
+        ]);
       }
-
-      setMessages(prev => [
-        ...prev,
-        {
-          id: Date.now(),
-          role: "assistant",
-          content: botReply
-        }
-      ]);
     } catch (error) {
-      console.error("Error calling Gemini API:", error);
+      console.error("Error handling message:", error);
       toast({
         title: "Error",
         description: "Failed to get a response. Please try again.",
@@ -226,7 +177,6 @@ const ChatBot = () => {
     </div>
   );
 
-  // Floating Chat Bubble UI
   const FloatingChatUI = () => (
     <motion.div
       className="fixed bottom-5 right-5 z-40 w-auto"
@@ -240,7 +190,7 @@ const ChatBot = () => {
           className="rounded-full w-14 h-14 shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground"
           size="icon"
         >
-          <Bot className="h-6 w-6" />
+          <Bot className="h-5 w-5" />
         </Button>
       ) : (
         <Card className="border border-primary/20 shadow-xl overflow-hidden w-full sm:w-[400px]">
@@ -279,7 +229,6 @@ const ChatBot = () => {
     </motion.div>
   );
 
-  // Window Chat UI
   const WindowChatUI = () => (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setDisplayMode("floating")}>
       <motion.div 
@@ -388,7 +337,6 @@ const ChatBot = () => {
     </div>
   );
 
-  // Render the appropriate UI based on display mode
   if (displayMode === "window") {
     return <WindowChatUI />;
   } else {
