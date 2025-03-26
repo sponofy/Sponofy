@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { SendHorizontal, Bot, X, Minimize2, Maximize2 } from "lucide-react";
@@ -8,8 +7,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/use-toast";
 
-// Sample initial messages
-const initialMessages = [
+interface Message {
+  id: number;
+  role: "user" | "assistant";
+  content: string;
+}
+
+const initialMessages: Message[] = [
   {
     id: 1,
     role: "assistant",
@@ -17,7 +21,6 @@ const initialMessages = [
   }
 ];
 
-// Knowledge base for the bot to focus on sponsorship topics
 const sponsorshipContext = `
 You are SponoBot, a helpful AI assistant for Sponofy - a platform that connects sponsors with sponsorship opportunities.
 Your expertise is specifically in:
@@ -33,12 +36,6 @@ If asked about topics outside of this scope, politely redirect the conversation 
 Keep responses concise, friendly, and informative.
 `;
 
-interface Message {
-  id: number;
-  role: "user" | "assistant";
-  content: string;
-}
-
 const ChatBot = () => {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [input, setInput] = useState("");
@@ -47,7 +44,6 @@ const ChatBot = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  // Auto-scroll to bottom of messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -55,10 +51,9 @@ const ChatBot = () => {
   const handleSend = async () => {
     if (!input.trim()) return;
     
-    // Add user message
-    const userMessage = {
+    const userMessage: Message = {
       id: Date.now(),
-      role: "user" as const,
+      role: "user",
       content: input.trim()
     };
     
@@ -67,7 +62,6 @@ const ChatBot = () => {
     setIsLoading(true);
 
     try {
-      // Call Gemini API
       const response = await fetch(
         "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=AIzaSyDaoLry4Krvdv4LLdWsnC_uqU1fk4D-aQk",
         {
@@ -119,13 +113,11 @@ const ChatBot = () => {
 
       const data = await response.json();
       
-      // Get text from response
       let botReply = "I'm sorry, I couldn't process your request.";
       if (data.candidates && data.candidates[0]?.content?.parts?.length > 0) {
         botReply = data.candidates[0].content.parts[0].text || botReply;
       }
 
-      // Add bot message
       setMessages(prev => [
         ...prev,
         {
@@ -142,7 +134,6 @@ const ChatBot = () => {
         variant: "destructive"
       });
       
-      // Add error message
       setMessages(prev => [
         ...prev,
         {
@@ -180,7 +171,6 @@ const ChatBot = () => {
         </Button>
       ) : (
         <Card className="border border-primary/20 shadow-xl overflow-hidden">
-          {/* Chat Header */}
           <div className="bg-primary text-primary-foreground p-3 flex justify-between items-center">
             <div className="flex items-center gap-2">
               <Bot className="h-5 w-5" />
@@ -196,7 +186,6 @@ const ChatBot = () => {
             </div>
           </div>
           
-          {/* Chat Messages */}
           <CardContent className="p-0">
             <div className="h-[350px] overflow-y-auto p-4 flex flex-col gap-3 bg-muted/40">
               {messages.map((message) => (
@@ -241,7 +230,6 @@ const ChatBot = () => {
               <div ref={messagesEndRef} />
             </div>
             
-            {/* Input Area */}
             <div className="p-3 bg-background border-t">
               <div className="flex gap-2">
                 <Textarea
