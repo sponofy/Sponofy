@@ -72,8 +72,11 @@ const AuthDialog = ({ isOpen, onOpenChange, initialView = "signIn" }: AuthDialog
                         form: "space-y-4",
                         formFieldAction: "text-sm text-primary hover:text-primary/90 font-medium",
                         formFieldInputShowPasswordButton: "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200",
-                        main: "mx-2", // Added margin inside main container
-                        footer: "mt-4 mx-2", // Added margin inside footer
+                        main: "mx-4", // Increased side margin from 2 to 4
+                        footer: "mt-4 mx-4", // Increased side margin from 2 to 4
+                        socialButtonsIconButton: "mr-3", // Added margin to the social buttons
+                        socialButtonsBlockButtonArrow: "mx-2", // Added margin to the social button arrows
+                        socialButtonsProviderButtonsContainer: "mb-4 space-y-3", // Added space between social buttons
                       },
                     }}
                     redirectUrl="/dashboard"
@@ -112,8 +115,11 @@ const AuthDialog = ({ isOpen, onOpenChange, initialView = "signIn" }: AuthDialog
                         form: "space-y-4",
                         formFieldAction: "text-sm text-primary hover:text-primary/90 font-medium",
                         formFieldInputShowPasswordButton: "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200",
-                        main: "mx-2", // Added margin inside main container
-                        footer: "mt-4 mx-2", // Added margin inside footer
+                        main: "mx-4", // Increased side margin from 2 to 4
+                        footer: "mt-4 mx-4", // Increased side margin from 2 to 4
+                        socialButtonsIconButton: "mr-3", // Added margin to the social buttons
+                        socialButtonsBlockButtonArrow: "mx-2", // Added margin to the social button arrows
+                        socialButtonsProviderButtonsContainer: "mb-4 space-y-3", // Added space between social buttons
                       },
                     }}
                     redirectUrl="/dashboard"
