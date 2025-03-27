@@ -62,12 +62,13 @@ const ChatBot = () => {
       content: input.trim()
     };
     
-    setMessages(prev => [...prev, userMessage]);
+    const updatedMessages = [...messages, userMessage];
+    setMessages(updatedMessages);
     setInput("");
     setIsLoading(true);
 
     try {
-      const botResponse = await sendMessage(input.trim(), messages);
+      const botResponse = await sendMessage(input.trim(), updatedMessages);
       
       if (botResponse) {
         setMessages(prev => [...prev, botResponse]);
@@ -107,6 +108,10 @@ const ChatBot = () => {
       e.preventDefault();
       handleSend();
     }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInput(e.target.value);
   };
 
   const MessageList = () => (
@@ -160,7 +165,7 @@ const ChatBot = () => {
         <Textarea
           placeholder="Ask about sponsorships..."
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           className="min-h-[40px] max-h-[120px] resize-none"
           maxLength={500}
@@ -318,7 +323,7 @@ const ChatBot = () => {
             <Textarea
               placeholder="Ask about sponsorships..."
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={handleInputChange}
               onKeyDown={handleKeyDown}
               className="min-h-[50px] max-h-[150px] resize-none"
               maxLength={500}

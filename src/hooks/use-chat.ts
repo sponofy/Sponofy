@@ -25,11 +25,9 @@ export function useChat(systemPrompt: string) {
     setIsLoading(true);
 
     try {
-      // For demo purposes, let's create a mock response (since we don't have a real API key)
-      // In production, you would use a real API call here
-      
+      // For demo purposes, let's create a mock response
       // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 800));
       
       // Create a mock response based on the user's question
       let botReply = "I'm your sponsorship assistant. How can I help you today?";
