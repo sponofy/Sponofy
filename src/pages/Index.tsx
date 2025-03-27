@@ -1,8 +1,10 @@
+
 import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
+import Clients from "@/components/Clients";
 import Services from "@/components/Services";
 import SponsorshipForms from "@/components/SponsorshipForms";
 import FAQ from "@/components/FAQ";
@@ -26,6 +28,9 @@ const Index = () => {
         
         <main className="flex-grow">
           <Hero />
+          
+          {/* Clients Section */}
+          <Clients />
           
           {/* About Section */}
           <motion.section
