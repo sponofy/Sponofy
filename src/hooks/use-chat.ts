@@ -15,17 +15,11 @@ export function useChat(systemPrompt: string) {
   const sendMessage = async (content: string, existingMessages: Message[]) => {
     if (!content.trim()) return null;
     
-    const userMessage: Message = {
-      id: Date.now(),
-      role: "user",
-      content: content.trim()
-    };
-    
     setIsLoading(true);
 
     try {
       // Simulate API delay - keep it short to improve responsiveness
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 300));
       
       // Create a mock response based on the user's question
       let botReply = "I'm your sponsorship assistant. How can I help you today?";
@@ -48,6 +42,7 @@ export function useChat(systemPrompt: string) {
         content: botReply
       };
 
+      setIsLoading(false);
       return assistantMessage;
     } catch (error) {
       console.error("Error in chat function:", error);
@@ -56,9 +51,8 @@ export function useChat(systemPrompt: string) {
         description: "Failed to get a response. Please try again.",
         variant: "destructive"
       });
-      return null;
-    } finally {
       setIsLoading(false);
+      return null;
     }
   };
 

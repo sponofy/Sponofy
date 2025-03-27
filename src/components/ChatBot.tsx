@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { SendHorizontal, Bot, X, Minimize2, Maximize2 } from "lucide-react";
@@ -45,10 +44,10 @@ const ChatBot = () => {
   const [isMinimized, setIsMinimized] = useState(true);
   const [displayMode, setDisplayMode] = useState<ChatBotDisplayMode>("floating");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
   const { messages, setMessages, isLoading, sendMessage } = useChat(sponsorshipContext);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-
+  
   // Initialize messages if empty
   useEffect(() => {
     if (messages.length === 0) {
@@ -56,6 +55,7 @@ const ChatBot = () => {
     }
   }, [messages.length, setMessages]);
 
+  // Scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading]);
@@ -68,6 +68,11 @@ const ChatBot = () => {
     }
   }, [isMinimized]);
 
+  // Handle input change without side effects
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInput(e.target.value);
+  };
+
   const handleSend = async () => {
     if (!input.trim()) return;
     
@@ -77,24 +82,17 @@ const ChatBot = () => {
       content: input.trim()
     };
     
-    const updatedMessages = [...messages, userMessage];
-    setMessages(updatedMessages);
+    const newMessages = [...messages, userMessage];
+    setMessages(newMessages);
+    
+    const currentInput = input.trim();
     setInput("");
     
     try {
-      const botResponse = await sendMessage(input.trim(), updatedMessages);
+      const botResponse = await sendMessage(currentInput, newMessages);
       
       if (botResponse) {
         setMessages(prev => [...prev, botResponse]);
-      } else {
-        setMessages(prev => [
-          ...prev,
-          {
-            id: Date.now(),
-            role: "assistant",
-            content: "I'm currently having trouble connecting to my knowledge base. Please try again in a moment, or ask a different question about sponsorships."
-          }
-        ]);
       }
     } catch (error) {
       console.error("Error handling message:", error);
@@ -103,15 +101,6 @@ const ChatBot = () => {
         description: "Failed to get a response. Please try again.",
         variant: "destructive"
       });
-      
-      setMessages(prev => [
-        ...prev,
-        {
-          id: Date.now(),
-          role: "assistant",
-          content: "Sorry, I encountered an error processing your request. Please try again."
-        }
-      ]);
     }
   };
 
@@ -120,10 +109,6 @@ const ChatBot = () => {
       e.preventDefault();
       handleSend();
     }
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setInput(e.target.value);
   };
 
   const MessageList = () => (
