@@ -1,10 +1,8 @@
-
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Play, ArrowRight, HandCoins, Users, ChartBar } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 
 const Hero = () => {
   return (
@@ -17,20 +15,6 @@ const Hero = () => {
 
       <div className="container px-4 md:px-6">
         <div className="flex flex-col items-center text-center max-w-5xl mx-auto">
-          {/* FlyWithSponofy Badge */}
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="mb-6"
-          >
-            <Badge
-              className="bg-gradient-to-r from-primary to-secondary text-white px-4 py-1.5 text-sm rounded-full animate-pulse-soft"
-            >
-              #FlyWithSponofy
-            </Badge>
-          </motion.div>
-
           <motion.h1 
             className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight md:leading-tight lg:leading-tight mb-6 tracking-tight text-balance relative"
             initial={{ opacity: 0, y: 20 }}
@@ -80,7 +64,6 @@ const Hero = () => {
             </Button>
           </motion.div>
 
-          {/* New Creative Platform Preview Section */}
           <motion.div 
             className="mt-16 w-full max-w-5xl mx-auto relative"
             initial={{ opacity: 0, y: 40 }}
@@ -88,7 +71,6 @@ const Hero = () => {
             transition={{ duration: 0.7, delay: 0.3 }}
           >
             <div className="relative overflow-hidden rounded-2xl shadow-2xl shadow-primary/10 bg-gradient-to-br from-white/80 to-white/50 dark:from-gray-900/80 dark:to-gray-900/50 backdrop-blur-sm">
-              {/* Decorative elements */}
               <div className="absolute -top-24 -left-24 w-48 h-48 bg-primary/10 rounded-full blur-3xl"></div>
               <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-secondary/10 rounded-full blur-3xl"></div>
               
@@ -154,10 +136,8 @@ const Hero = () => {
                     <div className="relative aspect-[4/3] rounded-lg overflow-hidden border border-gray-200 dark:border-gray-800 shadow-lg">
                       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-secondary/5"></div>
                       
-                      {/* Platform Interface Mockup */}
                       <div className="absolute inset-0 p-4">
                         <div className="h-full rounded-md overflow-hidden flex flex-col bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
-                          {/* Header */}
                           <div className="h-12 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center px-4">
                             <div className="w-3 h-3 rounded-full bg-red-400 mr-2"></div>
                             <div className="w-3 h-3 rounded-full bg-yellow-400 mr-2"></div>
@@ -165,16 +145,13 @@ const Hero = () => {
                             <div className="flex-1 h-5 mx-auto max-w-[180px] bg-gray-200 dark:bg-gray-700 rounded"></div>
                           </div>
                           
-                          {/* Content */}
                           <div className="flex-1 p-4 grid grid-cols-5 gap-4">
-                            {/* Sidebar */}
                             <div className="col-span-1 bg-gray-50 dark:bg-gray-800 rounded-md p-2 flex flex-col gap-2">
                               {[...Array(5)].map((_, i) => (
                                 <div key={i} className="h-8 bg-gray-200 dark:bg-gray-700 rounded-md"></div>
                               ))}
                             </div>
                             
-                            {/* Main Content */}
                             <div className="col-span-4 flex flex-col gap-4">
                               <div className="h-12 bg-gray-100 dark:bg-gray-800 rounded-md"></div>
                               <div className="grid grid-cols-2 gap-4 flex-1">
@@ -195,7 +172,6 @@ const Hero = () => {
                       </div>
                     </div>
                     
-                    {/* Floating elements */}
                     <motion.div 
                       className="absolute -right-6 -bottom-6 w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center shadow-lg border border-white/30 dark:border-white/10"
                       animate={{ 
