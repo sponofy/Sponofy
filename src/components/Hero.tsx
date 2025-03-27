@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Play, ArrowRight, HandCoins, Users, ChartBar } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 const Hero = () => {
   return (
@@ -16,6 +17,20 @@ const Hero = () => {
 
       <div className="container px-4 md:px-6">
         <div className="flex flex-col items-center text-center max-w-5xl mx-auto">
+          {/* FlyWithSponofy Badge */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="mb-6"
+          >
+            <Badge
+              className="bg-gradient-to-r from-primary to-secondary text-white px-4 py-1.5 text-sm rounded-full animate-pulse-soft"
+            >
+              #FlyWithSponofy
+            </Badge>
+          </motion.div>
+
           <motion.h1 
             className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight md:leading-tight lg:leading-tight mb-6 tracking-tight text-balance relative"
             initial={{ opacity: 0, y: 20 }}
@@ -207,4 +222,3 @@ const Hero = () => {
 };
 
 export default Hero;
-
