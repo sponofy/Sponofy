@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { SendHorizontal, Bot, X, Minimize2, Maximize2 } from "lucide-react";
@@ -40,18 +41,32 @@ Keep responses concise, friendly, and informative.
 type ChatBotDisplayMode = "floating" | "window";
 
 const ChatBot = () => {
-  const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const [isMinimized, setIsMinimized] = useState(true);
   const [displayMode, setDisplayMode] = useState<ChatBotDisplayMode>("floating");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
-  const { sendMessage } = useChat(sponsorshipContext);
+  const { messages, setMessages, isLoading, sendMessage } = useChat(sponsorshipContext);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Initialize messages if empty
+  useEffect(() => {
+    if (messages.length === 0) {
+      setMessages(initialMessages);
+    }
+  }, [messages.length, setMessages]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, isLoading]);
+
+  // Focus the textarea when chat is opened
+  useEffect(() => {
+    if (!isMinimized && textareaRef.current) {
+      // Small delay to ensure the component is fully rendered
+      setTimeout(() => textareaRef.current?.focus(), 100);
+    }
+  }, [isMinimized]);
 
   const handleSend = async () => {
     if (!input.trim()) return;
@@ -65,8 +80,7 @@ const ChatBot = () => {
     const updatedMessages = [...messages, userMessage];
     setMessages(updatedMessages);
     setInput("");
-    setIsLoading(true);
-
+    
     try {
       const botResponse = await sendMessage(input.trim(), updatedMessages);
       
@@ -98,8 +112,6 @@ const ChatBot = () => {
           content: "Sorry, I encountered an error processing your request. Please try again."
         }
       ]);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -163,6 +175,7 @@ const ChatBot = () => {
     <div className="p-3 bg-background border-t">
       <div className="flex gap-2">
         <Textarea
+          ref={textareaRef}
           placeholder="Ask about sponsorships..."
           value={input}
           onChange={handleInputChange}
@@ -321,6 +334,7 @@ const ChatBot = () => {
         <div className="p-4 bg-background border-t">
           <div className="flex gap-3">
             <Textarea
+              ref={textareaRef}
               placeholder="Ask about sponsorships..."
               value={input}
               onChange={handleInputChange}

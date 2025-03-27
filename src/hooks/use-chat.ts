@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -25,9 +24,8 @@ export function useChat(systemPrompt: string) {
     setIsLoading(true);
 
     try {
-      // For demo purposes, let's create a mock response
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 800));
+      // Simulate API delay - keep it short to improve responsiveness
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       // Create a mock response based on the user's question
       let botReply = "I'm your sponsorship assistant. How can I help you today?";
@@ -44,11 +42,13 @@ export function useChat(systemPrompt: string) {
         botReply = "That's a great question about sponsorships. On the Sponofy platform, we connect sponsors with perfect sponsorship opportunities through data-driven matching and comprehensive tools. Can you tell me more about your specific sponsorship needs or goals?";
       }
 
-      return {
-        id: Date.now(),
+      const assistantMessage: Message = {
+        id: Date.now() + 1,
         role: "assistant" as const,
         content: botReply
       };
+
+      return assistantMessage;
     } catch (error) {
       console.error("Error in chat function:", error);
       toast({
