@@ -7,8 +7,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageCircle, Bot, X } from "lucide-react";
 import { toast } from "sonner";
 
-// The API key for Gemini
-const GEMINI_API_KEY = "AIzaSyDaoLry4Krvdv4LLdWsnC_uqU1fk4D-aQk";
+// The updated API key for Gemini
+const GEMINI_API_KEY = "AIzaSyCrOxFNAlMVUZQPHz7EIJvtvkzCmVuJgDY";
 
 interface Message {
   role: "user" | "assistant";
@@ -51,9 +51,9 @@ const ChatBot = () => {
     setIsLoading(true);
 
     try {
-      // Fixed API URL to use the correct Gemini API endpoint
+      // Updated API endpoint to use the correct Gemini API endpoint
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`,
         {
           method: "POST",
           headers: {
