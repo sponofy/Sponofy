@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import Navbar from "@/components/Navbar";
@@ -10,9 +10,12 @@ import SponsorshipForms from "@/components/SponsorshipForms";
 import FAQ from "@/components/FAQ";
 import Testimonials from "@/components/Testimonials";
 import Footer from "@/components/Footer";
+import ChatBot from "@/components/ChatBot";
 import { Handshake, Rocket, Target } from "lucide-react";
 
 const Index = () => {
+  const [chatbotRef, setChatbotRef] = useState<{ open: () => void } | null>(null);
+
   useEffect(() => {
     // Set the page title
     document.title = "Sponofy - Connecting Sponsors & Clients";
@@ -21,10 +24,16 @@ const Index = () => {
     window.scrollTo(0, 0);
   }, []);
 
+  const handleOpenChatbot = () => {
+    if (chatbotRef && chatbotRef.open) {
+      chatbotRef.open();
+    }
+  };
+
   return (
     <ThemeProvider defaultTheme="light">
       <div className="flex flex-col min-h-screen">
-        <Navbar />
+        <Navbar openChatbot={handleOpenChatbot} />
         
         <main className="flex-grow">
           <Hero />
@@ -124,6 +133,9 @@ const Index = () => {
         
         <Footer />
       </div>
+      
+      {/* Standalone ChatBot component controlled by Navbar */}
+      <ChatBot />
     </ThemeProvider>
   );
 };

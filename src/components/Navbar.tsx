@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ThemeToggle } from "./ui/theme-toggle";
@@ -7,7 +8,11 @@ import { useUser, SignedIn, SignedOut, UserButton } from "@clerk/clerk-react";
 import { motion, AnimatePresence } from "framer-motion";
 import AuthDialog from "./AuthDialog";
 
-const Navbar = () => {
+interface NavbarProps {
+  openChatbot?: () => void;
+}
+
+const Navbar = ({ openChatbot }: NavbarProps) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
@@ -40,6 +45,13 @@ const Navbar = () => {
     if (section) {
       section.scrollIntoView({ behavior: "smooth" });
     }
+  };
+
+  const handleOpenChat = () => {
+    if (openChatbot) {
+      openChatbot();
+    }
+    setIsMobileMenuOpen(false);
   };
 
   return (
@@ -85,6 +97,12 @@ const Navbar = () => {
                 className="px-4 py-2 text-foreground/90 dark:text-foreground/80 hover:text-primary dark:hover:text-primary transition-colors rounded-md"
               >
                 Connect
+              </button>
+              <button
+                onClick={handleOpenChat}
+                className="px-4 py-2 text-foreground/90 dark:text-foreground/80 hover:text-primary dark:hover:text-primary transition-colors rounded-md"
+              >
+                AI Support
               </button>
             </nav>
 
@@ -194,6 +212,12 @@ const Navbar = () => {
                     className="text-2xl font-medium text-foreground/90 hover:text-primary transition-colors"
                   >
                     Connect
+                  </button>
+                  <button
+                    onClick={handleOpenChat}
+                    className="text-2xl font-medium text-foreground/90 hover:text-primary transition-colors"
+                  >
+                    AI Support
                   </button>
                   
                   <SignedIn>

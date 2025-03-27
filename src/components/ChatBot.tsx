@@ -34,6 +34,11 @@ const ChatBot = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+  
+  // Function to open the chat
+  const openChat = () => {
+    setIsOpen(true);
+  };
 
   const handleSendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -46,8 +51,9 @@ const ChatBot = () => {
     setIsLoading(true);
 
     try {
+      // Fixed API URL to use the correct Gemini API endpoint
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`,
+        `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`,
         {
           method: "POST",
           headers: {
@@ -73,14 +79,15 @@ const ChatBot = () => {
 
       const data = await response.json();
       
-      if (data.candidates && data.candidates[0]?.content?.parts) {
+      if (response.ok && data.candidates && data.candidates[0]?.content?.parts) {
         const botResponse = data.candidates[0].content.parts[0].text;
         setMessages((prev) => [
           ...prev,
           { role: "assistant", content: botResponse },
         ]);
       } else {
-        throw new Error("Invalid response from API");
+        console.error("Gemini API error:", data);
+        throw new Error(data.error?.message || "Error communicating with AI");
       }
     } catch (error) {
       console.error("Error calling Gemini API:", error);
@@ -89,7 +96,7 @@ const ChatBot = () => {
         ...prev,
         {
           role: "assistant",
-          content: "I'm having trouble processing your request. Please try again later.",
+          content: "I'm having trouble connecting to my brain right now. Please try again in a moment.",
         },
       ]);
     } finally {
