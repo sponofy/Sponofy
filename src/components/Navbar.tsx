@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ThemeToggle } from "./ui/theme-toggle";
 import { Button } from "@/components/ui/button";
-import { Menu, X, LogIn } from "lucide-react";
+import { Menu, X, LogIn, Link as LinkIcon } from "lucide-react";
 import { useUser, SignedIn, SignedOut, UserButton } from "@clerk/clerk-react";
 import { motion, AnimatePresence } from "framer-motion";
 import AuthDialog from "./AuthDialog";
@@ -80,6 +80,12 @@ const Navbar = () => {
                 className="px-4 py-2 text-foreground/90 dark:text-foreground/80 hover:text-primary dark:hover:text-primary transition-colors rounded-md"
               >
                 Services
+              </button>
+              <button
+                onClick={() => scrollToSection("sponsorship-forms")}
+                className="px-4 py-2 text-foreground/90 dark:text-foreground/80 hover:text-primary dark:hover:text-primary transition-colors rounded-md flex items-center"
+              >
+                <LinkIcon className="mr-1 h-4 w-4" /> Connect
               </button>
             </nav>
 
@@ -183,6 +189,12 @@ const Navbar = () => {
                     className="text-2xl font-medium text-foreground/90 hover:text-primary transition-colors"
                   >
                     Services
+                  </button>
+                  <button
+                    onClick={() => scrollToSection("sponsorship-forms")}
+                    className="text-2xl font-medium text-foreground/90 hover:text-primary transition-colors flex items-center"
+                  >
+                    <LinkIcon className="mr-2 h-5 w-5" /> Connect
                   </button>
                   
                   <SignedIn>
