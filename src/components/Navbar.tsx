@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ThemeToggle } from "./ui/theme-toggle";
@@ -34,6 +35,14 @@ const Navbar = () => {
     setIsMobileMenuOpen(false);
   };
 
+  const scrollToSection = (sectionId: string) => {
+    setIsMobileMenuOpen(false);
+    const section = document.getElementById(sectionId);
+    if (section) {
+      section.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
   return (
     <>
       <header
@@ -60,18 +69,18 @@ const Navbar = () => {
               >
                 Home
               </Link>
-              <Link
-                to="/#about"
+              <button
+                onClick={() => scrollToSection("about")}
                 className="px-4 py-2 text-foreground/90 dark:text-foreground/80 hover:text-primary dark:hover:text-primary transition-colors rounded-md"
               >
                 About Us
-              </Link>
-              <Link
-                to="/#services"
+              </button>
+              <button
+                onClick={() => scrollToSection("services")}
                 className="px-4 py-2 text-foreground/90 dark:text-foreground/80 hover:text-primary dark:hover:text-primary transition-colors rounded-md"
               >
                 Services
-              </Link>
+              </button>
             </nav>
 
             <div className="hidden md:flex items-center space-x-4">
@@ -163,20 +172,18 @@ const Navbar = () => {
                   >
                     Home
                   </Link>
-                  <Link
-                    to="/#about"
-                    onClick={() => setIsMobileMenuOpen(false)}
+                  <button
+                    onClick={() => scrollToSection("about")}
                     className="text-2xl font-medium text-foreground/90 hover:text-primary transition-colors"
                   >
                     About Us
-                  </Link>
-                  <Link
-                    to="/#services"
-                    onClick={() => setIsMobileMenuOpen(false)}
+                  </button>
+                  <button
+                    onClick={() => scrollToSection("services")}
                     className="text-2xl font-medium text-foreground/90 hover:text-primary transition-colors"
                   >
                     Services
-                  </Link>
+                  </button>
                   
                   <SignedIn>
                     <Button

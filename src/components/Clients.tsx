@@ -1,7 +1,6 @@
 
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 
 const Clients = () => {
   const clients = [
@@ -37,15 +36,7 @@ const Clients = () => {
       transition={{ duration: 0.5 }}
     >
       <div className="container px-4 md:px-6">
-        <div className="text-center mb-12 relative">
-          <div className="absolute -top-6 left-1/2 transform -translate-x-1/2">
-            <Badge 
-              variant="secondary" 
-              className="bg-gradient-to-r from-primary/20 to-secondary/20 backdrop-blur-sm text-primary dark:text-primary-foreground border border-primary/10 px-3 animate-pulse-soft"
-            >
-              FlyWithSponofy
-            </Badge>
-          </div>
+        <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold">
             Here are some of <span className="text-gradient">our clients</span>
           </h2>
