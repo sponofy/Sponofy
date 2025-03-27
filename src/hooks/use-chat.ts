@@ -1,7 +1,8 @@
-import { useState } from "react";
-import { useToast } from "@/components/ui/use-toast";
 
-interface Message {
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+
+export interface Message {
   id: number;
   role: "user" | "assistant";
   content: string;
@@ -12,16 +13,27 @@ export function useChat(systemPrompt: string) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const sendMessage = async (content: string, existingMessages: Message[]) => {
+  const sendMessage = async (content: string) => {
     if (!content.trim()) return null;
     
+    // Create a user message
+    const userMessage: Message = {
+      id: Date.now(),
+      role: "user",
+      content: content.trim()
+    };
+    
+    // Update messages with user message first
+    setMessages(prev => [...prev, userMessage]);
+    
+    // Then set loading state
     setIsLoading(true);
 
     try {
-      // Simulate API delay - keep it short to improve responsiveness
-      await new Promise(resolve => setTimeout(resolve, 300));
+      // Minimal delay for UX
+      await new Promise(resolve => setTimeout(resolve, 100));
       
-      // Create a mock response based on the user's question
+      // Generate response based on the question
       let botReply = "I'm your sponsorship assistant. How can I help you today?";
       
       if (content.toLowerCase().includes("sponsor")) {
@@ -36,14 +48,20 @@ export function useChat(systemPrompt: string) {
         botReply = "That's a great question about sponsorships. On the Sponofy platform, we connect sponsors with perfect sponsorship opportunities through data-driven matching and comprehensive tools. Can you tell me more about your specific sponsorship needs or goals?";
       }
 
+      // Create the assistant message
       const assistantMessage: Message = {
         id: Date.now() + 1,
-        role: "assistant" as const,
+        role: "assistant",
         content: botReply
       };
 
+      // Update messages with the bot reply
+      setMessages(prev => [...prev, assistantMessage]);
+      
+      // Finally, set loading to false
       setIsLoading(false);
-      return assistantMessage;
+      
+      return true;
     } catch (error) {
       console.error("Error in chat function:", error);
       toast({
@@ -52,7 +70,7 @@ export function useChat(systemPrompt: string) {
         variant: "destructive"
       });
       setIsLoading(false);
-      return null;
+      return false;
     }
   };
 

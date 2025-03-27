@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { SendHorizontal, Bot, X, Minimize2, Maximize2 } from "lucide-react";
@@ -5,14 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useToast } from "@/components/ui/use-toast";
-import { useChat } from "@/hooks/use-chat";
-
-interface Message {
-  id: number;
-  role: "user" | "assistant";
-  content: string;
-}
+import { useToast } from "@/hooks/use-toast";
+import { useChat, Message } from "@/hooks/use-chat";
 
 const initialMessages: Message[] = [
   {
@@ -60,45 +55,32 @@ const ChatBot = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading]);
 
-  // Focus the textarea when chat is opened
+  // Focus textarea when chat is opened
   useEffect(() => {
     if (!isMinimized && textareaRef.current) {
-      // Small delay to ensure the component is fully rendered
       setTimeout(() => textareaRef.current?.focus(), 100);
     }
   }, [isMinimized]);
 
-  // Handle input change without side effects
+  // Simple input handler with no side effects
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value);
   };
 
+  // Handles message sending with debounce protection
   const handleSend = async () => {
-    if (!input.trim()) return;
-    
-    const userMessage: Message = {
-      id: Date.now(),
-      role: "user",
-      content: input.trim()
-    };
-    
-    const newMessages = [...messages, userMessage];
-    setMessages(newMessages);
+    if (!input.trim() || isLoading) return;
     
     const currentInput = input.trim();
-    setInput("");
+    setInput(""); // Clear input immediately for better UX
     
     try {
-      const botResponse = await sendMessage(currentInput, newMessages);
-      
-      if (botResponse) {
-        setMessages(prev => [...prev, botResponse]);
-      }
+      await sendMessage(currentInput);
     } catch (error) {
       console.error("Error handling message:", error);
       toast({
         title: "Error",
-        description: "Failed to get a response. Please try again.",
+        description: "Failed to send your message. Please try again.",
         variant: "destructive"
       });
     }
@@ -111,51 +93,60 @@ const ChatBot = () => {
     }
   };
 
+  // Extracted Message item component for better organization
+  const MessageItem = ({ message }: { message: Message }) => (
+    <div 
+      className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
+    >
+      <div 
+        className={`max-w-[80%] rounded-lg p-3 ${
+          message.role === "user" 
+            ? "bg-primary/90 text-primary-foreground ml-4" 
+            : "bg-muted-foreground/10 mr-4 flex"
+        }`}
+      >
+        {message.role === "assistant" && (
+          <Avatar className="h-8 w-8 mr-2">
+            <AvatarImage src="/lovable-uploads/a761c347-a465-4ed2-863f-00d1a4c64599.png" alt="SponoBot" />
+            <AvatarFallback className="bg-primary/20 text-primary">SB</AvatarFallback>
+          </Avatar>
+        )}
+        <div className={message.role === "assistant" ? "mt-0.5" : ""}>
+          {message.content}
+        </div>
+      </div>
+    </div>
+  );
+
+  // Loading indicator component
+  const LoadingIndicator = () => (
+    <div className="flex justify-start">
+      <div className="max-w-[80%] bg-muted-foreground/10 rounded-lg p-3 mr-4 flex">
+        <Avatar className="h-8 w-8 mr-2">
+          <AvatarImage src="/lovable-uploads/a761c347-a465-4ed2-863f-00d1a4c64599.png" alt="SponoBot" />
+          <AvatarFallback className="bg-primary/20 text-primary">SB</AvatarFallback>
+        </Avatar>
+        <div className="flex items-center space-x-1">
+          <div className="w-2 h-2 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: "0ms" }}></div>
+          <div className="w-2 h-2 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: "300ms" }}></div>
+          <div className="w-2 h-2 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: "600ms" }}></div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Message list component
   const MessageList = () => (
     <div className="h-[350px] overflow-y-auto p-4 flex flex-col gap-3 bg-muted/40">
       {messages.map((message) => (
-        <div 
-          key={message.id} 
-          className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
-        >
-          <div 
-            className={`max-w-[80%] rounded-lg p-3 ${
-              message.role === "user" 
-                ? "bg-primary/90 text-primary-foreground ml-4" 
-                : "bg-muted-foreground/10 mr-4 flex"
-            }`}
-          >
-            {message.role === "assistant" && (
-              <Avatar className="h-8 w-8 mr-2">
-                <AvatarImage src="/lovable-uploads/a761c347-a465-4ed2-863f-00d1a4c64599.png" alt="SponoBot" />
-                <AvatarFallback className="bg-primary/20 text-primary">SB</AvatarFallback>
-              </Avatar>
-            )}
-            <div className={message.role === "assistant" ? "mt-0.5" : ""}>
-              {message.content}
-            </div>
-          </div>
-        </div>
+        <MessageItem key={message.id} message={message} />
       ))}
-      {isLoading && (
-        <div className="flex justify-start">
-          <div className="max-w-[80%] bg-muted-foreground/10 rounded-lg p-3 mr-4 flex">
-            <Avatar className="h-8 w-8 mr-2">
-              <AvatarImage src="/lovable-uploads/a761c347-a465-4ed2-863f-00d1a4c64599.png" alt="SponoBot" />
-              <AvatarFallback className="bg-primary/20 text-primary">SB</AvatarFallback>
-            </Avatar>
-            <div className="flex items-center space-x-1">
-              <div className="w-2 h-2 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: "0ms" }}></div>
-              <div className="w-2 h-2 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: "300ms" }}></div>
-              <div className="w-2 h-2 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: "600ms" }}></div>
-            </div>
-          </div>
-        </div>
-      )}
+      {isLoading && <LoadingIndicator />}
       <div ref={messagesEndRef} />
     </div>
   );
 
+  // Chat input component
   const ChatInput = () => (
     <div className="p-3 bg-background border-t">
       <div className="flex gap-2">
@@ -167,6 +158,7 @@ const ChatBot = () => {
           onKeyDown={handleKeyDown}
           className="min-h-[40px] max-h-[120px] resize-none"
           maxLength={500}
+          disabled={isLoading}
         />
         <Button 
           onClick={handleSend} 
@@ -180,6 +172,7 @@ const ChatBot = () => {
     </div>
   );
 
+  // Floating chat UI component
   const FloatingChatUI = () => (
     <motion.div
       className="fixed bottom-5 right-5 z-40 w-auto"
@@ -232,6 +225,7 @@ const ChatBot = () => {
     </motion.div>
   );
 
+  // Window chat UI component
   const WindowChatUI = () => (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setDisplayMode("floating")}>
       <motion.div 
@@ -275,17 +269,12 @@ const ChatBot = () => {
         
         <div className="h-[500px] overflow-y-auto p-4 flex flex-col gap-3 bg-muted/40">
           {messages.map((message) => (
-            <div 
-              key={message.id} 
-              className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
-            >
-              <div 
-                className={`max-w-[80%] rounded-lg p-4 ${
-                  message.role === "user" 
-                    ? "bg-primary/90 text-primary-foreground ml-4" 
-                    : "bg-muted-foreground/10 mr-4 flex"
-                }`}
-              >
+            <div key={message.id} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
+              <div className={`max-w-[80%] rounded-lg p-4 ${
+                message.role === "user" 
+                  ? "bg-primary/90 text-primary-foreground ml-4" 
+                  : "bg-muted-foreground/10 mr-4 flex"
+              }`}>
                 {message.role === "assistant" && (
                   <Avatar className="h-10 w-10 mr-3">
                     <AvatarImage src="/lovable-uploads/a761c347-a465-4ed2-863f-00d1a4c64599.png" alt="SponoBot" />
@@ -326,6 +315,7 @@ const ChatBot = () => {
               onKeyDown={handleKeyDown}
               className="min-h-[50px] max-h-[150px] resize-none"
               maxLength={500}
+              disabled={isLoading}
             />
             <Button 
               onClick={handleSend} 
@@ -341,11 +331,8 @@ const ChatBot = () => {
     </div>
   );
 
-  if (displayMode === "window") {
-    return <WindowChatUI />;
-  } else {
-    return <FloatingChatUI />;
-  }
+  // Render the appropriate UI based on the display mode
+  return displayMode === "window" ? <WindowChatUI /> : <FloatingChatUI />;
 };
 
 export default ChatBot;
