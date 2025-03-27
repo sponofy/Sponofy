@@ -9,7 +9,6 @@ import SponsorshipForms from "@/components/SponsorshipForms";
 import FAQ from "@/components/FAQ";
 import Testimonials from "@/components/Testimonials";
 import Footer from "@/components/Footer";
-import ChatBot from "@/components/ChatBot";
 import { Handshake, Rocket, Target } from "lucide-react";
 
 const Index = () => {
@@ -115,8 +114,6 @@ const Index = () => {
           
           <Services />
           <SponsorshipForms />
-          {/* ChatBot is fixed position, so it doesn't need a specific section */}
-          <ChatBot />
           <FAQ />
           <Testimonials />
         </main>
