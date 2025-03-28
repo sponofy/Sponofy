@@ -37,10 +37,17 @@ import {
   Clock,
   CheckCircle,
   XCircle,
+  CalendarDays,
+  Calendar,
+  DollarSign
 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { useClerk } from '@clerk/clerk-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Slider } from '@/components/ui/slider';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { subDays, isAfter, startOfDay } from 'date-fns';
 
 type ClientRequest = {
   id: string;
@@ -231,7 +238,13 @@ const Dashboard = () => {
     completed_sponsorships: 0
   });
   const [loading, setLoading] = useState(true);
-  const [categoryFilter, setcategoryFilter] = useState<string | null>(null);
+  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
+  
+  const [dateFilter, setDateFilter] = useState<string>('all');
+  const [costRange, setCostRange] = useState<[number]>([10000]);
+  
+  const [filteredClientForms, setFilteredClientForms] = useState<ClientRequest[]>([]);
+  const [filteredCompanyForms, setFilteredCompanyForms] = useState<CompanyOffer[]>([]);
 
   const [performanceData, setPerformanceData] = useState([
     { name: 'Jan', value: 0 },
@@ -413,6 +426,82 @@ const Dashboard = () => {
     setPieData(pieData);
   };
 
+  useEffect(() => {
+    let filtered = [...clientForms];
+    
+    if (dateFilter !== 'all') {
+      const today = startOfDay(new Date());
+      let cutoffDate: Date;
+      
+      switch (dateFilter) {
+        case 'today':
+          cutoffDate = today;
+          break;
+        case 'week':
+          cutoffDate = subDays(today, 7);
+          break;
+        case 'month':
+          cutoffDate = subDays(today, 30);
+          break;
+        case 'year':
+          cutoffDate = subDays(today, 365);
+          break;
+        default:
+          cutoffDate = new Date(0); // All time
+      }
+      
+      filtered = filtered.filter(form => 
+        isAfter(new Date(form.created_at), cutoffDate)
+      );
+    }
+    
+    filtered = filtered.filter(form => form.amount <= costRange[0]);
+    
+    if (categoryFilter) {
+      filtered = filtered.filter(form => form.category === categoryFilter);
+    }
+    
+    setFilteredClientForms(filtered);
+  }, [clientForms, dateFilter, costRange, categoryFilter]);
+  
+  useEffect(() => {
+    let filtered = [...companyForms];
+    
+    if (dateFilter !== 'all') {
+      const today = startOfDay(new Date());
+      let cutoffDate: Date;
+      
+      switch (dateFilter) {
+        case 'today':
+          cutoffDate = today;
+          break;
+        case 'week':
+          cutoffDate = subDays(today, 7);
+          break;
+        case 'month':
+          cutoffDate = subDays(today, 30);
+          break;
+        case 'year':
+          cutoffDate = subDays(today, 365);
+          break;
+        default:
+          cutoffDate = new Date(0); // All time
+      }
+      
+      filtered = filtered.filter(form => 
+        isAfter(new Date(form.created_at), cutoffDate)
+      );
+    }
+    
+    filtered = filtered.filter(form => form.budget <= costRange[0]);
+    
+    if (categoryFilter) {
+      filtered = filtered.filter(form => form.industry === categoryFilter);
+    }
+    
+    setFilteredCompanyForms(filtered);
+  }, [companyForms, dateFilter, costRange, categoryFilter]);
+
   const handleViewDetails = (item: ClientRequest | CompanyOffer, type: 'client' | 'company') => {
     setSelectedItem(item);
     setDetailsType(type);
@@ -506,6 +595,9 @@ const Dashboard = () => {
   if (!isAuthenticated) {
     return null;
   }
+
+  const uniqueClientCategories = Array.from(new Set(clientForms.map(form => form.category)));
+  const uniqueCompanyIndustries = Array.from(new Set(companyForms.map(form => form.industry)));
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -690,26 +782,79 @@ const Dashboard = () => {
                     <div className="text-center py-8 text-muted-foreground">No client requests found</div>
                   ) : (
                     <div className="overflow-x-auto">
-                      <div className="flex flex-wrap gap-4 mb-4">
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => setcategoryFilter(null)}
-                          className={categoryFilter === null ? "bg-primary/10" : ""}
-                        >
-                          All Categories
-                        </Button>
-                        {Array.from(new Set(clientForms.map(form => form.category))).map((category) => (
-                          <Button 
-                            key={category} 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => setcategoryFilter(category)}
-                            className={categoryFilter === category ? "bg-primary/10" : ""}
-                          >
-                            {category}
-                          </Button>
-                        ))}
+                      <div className="flex flex-wrap gap-4 mb-6">
+                        <div className="w-full flex flex-wrap gap-4 p-4 bg-muted/30 rounded-lg">
+                          <div className="space-y-2">
+                            <p className="text-sm font-medium">Category</p>
+                            <Select 
+                              value={categoryFilter || ''} 
+                              onValueChange={(value) => setCategoryFilter(value === '' ? null : value)}
+                            >
+                              <SelectTrigger className="w-[200px]">
+                                <SelectValue placeholder="All Categories" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="">All Categories</SelectItem>
+                                {uniqueClientCategories.map(category => (
+                                  <SelectItem key={category} value={category}>{category}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <p className="text-sm font-medium">Date Range</p>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="outline" className="w-[200px] justify-start flex">
+                                  <CalendarDays className="mr-2 h-4 w-4" />
+                                  {dateFilter === 'all' && 'All Time'}
+                                  {dateFilter === 'today' && 'Today'}
+                                  {dateFilter === 'week' && 'This Week'}
+                                  {dateFilter === 'month' && 'This Month'}
+                                  {dateFilter === 'year' && 'This Year'}
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent className="w-[200px]">
+                                <DropdownMenuItem onClick={() => setDateFilter('all')}>
+                                  All Time
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setDateFilter('today')}>
+                                  Today
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setDateFilter('week')}>
+                                  This Week
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setDateFilter('month')}>
+                                  This Month
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setDateFilter('year')}>
+                                  This Year
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                          
+                          <div className="space-y-2 w-full md:w-auto flex-1 min-w-[300px]">
+                            <div className="flex justify-between">
+                              <p className="text-sm font-medium">Budget Amount</p>
+                              <p className="text-sm font-medium">${costRange[0].toLocaleString()}</p>
+                            </div>
+                            <div className="pt-4 pb-2">
+                              <Slider
+                                defaultValue={[10000]}
+                                max={10000}
+                                step={500}
+                                value={costRange}
+                                onValueChange={(value: [number]) => setCostRange(value)}
+                              />
+                            </div>
+                            <div className="flex justify-between text-xs text-muted-foreground">
+                              <span>$0</span>
+                              <span>$10,000</span>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                       
                       <Table>
@@ -727,48 +872,46 @@ const Dashboard = () => {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {clientForms
-                            .filter(form => categoryFilter === null || form.category === categoryFilter)
-                            .map((form) => (
-                              <TableRow key={form.id} className="hover:bg-muted/50">
-                                <TableCell className="font-medium">{form.name}</TableCell>
-                                <TableCell>
-                                  <div className="max-w-[180px] truncate">
-                                    <div>{form.email}</div>
-                                    {form.phone && <div className="text-sm text-muted-foreground">{form.phone}</div>}
-                                  </div>
-                                </TableCell>
-                                <TableCell className="max-w-[150px] truncate">{form.project_name}</TableCell>
-                                <TableCell>{form.category}</TableCell>
-                                <TableCell>${form.amount.toLocaleString()}</TableCell>
-                                <TableCell>
-                                  <Badge variant={form.status === 'completed' ? 'default' : form.status === 'pending' ? 'outline' : 'destructive'}>
-                                    {form.status.charAt(0).toUpperCase() + form.status.slice(1)}
-                                  </Badge>
-                                </TableCell>
-                                <TableCell>{new Date(form.created_at).toLocaleDateString()}</TableCell>
-                                <TableCell>
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm" 
-                                    onClick={() => handleViewDetails(form, 'client')}
-                                    className="h-8 w-8 p-0"
-                                  >
-                                    <Eye className="h-4 w-4" />
-                                    <span className="sr-only">View details</span>
-                                  </Button>
-                                </TableCell>
-                                <TableCell className="text-center">
-                                  <Checkbox 
-                                    id={`complete-client-${form.id}`}
-                                    checked={form.status === 'completed'}
-                                    onCheckedChange={(checked) => {
-                                      handleStatusChange(form, 'client', checked === true);
-                                    }}
-                                  />
-                                </TableCell>
-                              </TableRow>
-                            ))}
+                          {filteredClientForms.map((form) => (
+                            <TableRow key={form.id} className="hover:bg-muted/50">
+                              <TableCell className="font-medium">{form.name}</TableCell>
+                              <TableCell>
+                                <div className="max-w-[180px] truncate">
+                                  <div>{form.email}</div>
+                                  {form.phone && <div className="text-sm text-muted-foreground">{form.phone}</div>}
+                                </div>
+                              </TableCell>
+                              <TableCell className="max-w-[150px] truncate">{form.project_name}</TableCell>
+                              <TableCell>{form.category}</TableCell>
+                              <TableCell>${form.amount.toLocaleString()}</TableCell>
+                              <TableCell>
+                                <Badge variant={form.status === 'completed' ? 'default' : form.status === 'pending' ? 'outline' : 'destructive'}>
+                                  {form.status.charAt(0).toUpperCase() + form.status.slice(1)}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>{new Date(form.created_at).toLocaleDateString()}</TableCell>
+                              <TableCell>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  onClick={() => handleViewDetails(form, 'client')}
+                                  className="h-8 w-8 p-0"
+                                >
+                                  <Eye className="h-4 w-4" />
+                                  <span className="sr-only">View details</span>
+                                </Button>
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <Checkbox 
+                                  id={`complete-client-${form.id}`}
+                                  checked={form.status === 'completed'}
+                                  onCheckedChange={(checked) => {
+                                    handleStatusChange(form, 'client', checked === true);
+                                  }}
+                                />
+                              </TableCell>
+                            </TableRow>
+                          ))}
                         </TableBody>
                       </Table>
                     </div>
@@ -782,26 +925,79 @@ const Dashboard = () => {
                     <div className="text-center py-8 text-muted-foreground">No company offers found</div>
                   ) : (
                     <div className="overflow-x-auto">
-                      <div className="flex flex-wrap gap-4 mb-4">
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => setcategoryFilter(null)}
-                          className={categoryFilter === null ? "bg-primary/10" : ""}
-                        >
-                          All Industries
-                        </Button>
-                        {Array.from(new Set(companyForms.map(form => form.industry))).map((industry) => (
-                          <Button 
-                            key={industry} 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => setcategoryFilter(industry)}
-                            className={categoryFilter === industry ? "bg-primary/10" : ""}
-                          >
-                            {industry}
-                          </Button>
-                        ))}
+                      <div className="flex flex-wrap gap-4 mb-6">
+                        <div className="w-full flex flex-wrap gap-4 p-4 bg-muted/30 rounded-lg">
+                          <div className="space-y-2">
+                            <p className="text-sm font-medium">Industry</p>
+                            <Select 
+                              value={categoryFilter || ''} 
+                              onValueChange={(value) => setCategoryFilter(value === '' ? null : value)}
+                            >
+                              <SelectTrigger className="w-[200px]">
+                                <SelectValue placeholder="All Industries" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="">All Industries</SelectItem>
+                                {uniqueCompanyIndustries.map(industry => (
+                                  <SelectItem key={industry} value={industry}>{industry}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <p className="text-sm font-medium">Date Range</p>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="outline" className="w-[200px] justify-start flex">
+                                  <CalendarDays className="mr-2 h-4 w-4" />
+                                  {dateFilter === 'all' && 'All Time'}
+                                  {dateFilter === 'today' && 'Today'}
+                                  {dateFilter === 'week' && 'This Week'}
+                                  {dateFilter === 'month' && 'This Month'}
+                                  {dateFilter === 'year' && 'This Year'}
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent className="w-[200px]">
+                                <DropdownMenuItem onClick={() => setDateFilter('all')}>
+                                  All Time
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setDateFilter('today')}>
+                                  Today
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setDateFilter('week')}>
+                                  This Week
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setDateFilter('month')}>
+                                  This Month
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setDateFilter('year')}>
+                                  This Year
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                          
+                          <div className="space-y-2 w-full md:w-auto flex-1 min-w-[300px]">
+                            <div className="flex justify-between">
+                              <p className="text-sm font-medium">Budget Amount</p>
+                              <p className="text-sm font-medium">${costRange[0].toLocaleString()}</p>
+                            </div>
+                            <div className="pt-4 pb-2">
+                              <Slider
+                                defaultValue={[10000]}
+                                max={10000}
+                                step={500}
+                                value={costRange}
+                                onValueChange={(value: [number]) => setCostRange(value)}
+                              />
+                            </div>
+                            <div className="flex justify-between text-xs text-muted-foreground">
+                              <span>$0</span>
+                              <span>$10,000</span>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                       
                       <Table>
@@ -819,49 +1015,47 @@ const Dashboard = () => {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {companyForms
-                            .filter(form => categoryFilter === null || form.industry === categoryFilter)
-                            .map((form) => (
-                              <TableRow key={form.id} className="hover:bg-muted/50">
-                                <TableCell className="font-medium">{form.company_name}</TableCell>
-                                <TableCell>
-                                  <div className="max-w-[180px] truncate">
-                                    <div>{form.contact_person}</div>
-                                    <div className="text-sm text-muted-foreground">{form.email}</div>
-                                    {form.phone && <div className="text-sm text-muted-foreground">{form.phone}</div>}
-                                  </div>
-                                </TableCell>
-                                <TableCell>{form.industry}</TableCell>
-                                <TableCell>${form.budget.toLocaleString()}</TableCell>
-                                <TableCell className="max-w-[150px] truncate">{form.interests}</TableCell>
-                                <TableCell>
-                                  <Badge variant={form.status === 'completed' ? 'default' : form.status === 'pending' ? 'outline' : 'destructive'}>
-                                    {form.status.charAt(0).toUpperCase() + form.status.slice(1)}
-                                  </Badge>
-                                </TableCell>
-                                <TableCell>{new Date(form.created_at).toLocaleDateString()}</TableCell>
-                                <TableCell>
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm" 
-                                    onClick={() => handleViewDetails(form, 'company')}
-                                    className="h-8 w-8 p-0"
-                                  >
-                                    <Eye className="h-4 w-4" />
-                                    <span className="sr-only">View details</span>
-                                  </Button>
-                                </TableCell>
-                                <TableCell className="text-center">
-                                  <Checkbox 
-                                    id={`complete-company-${form.id}`}
-                                    checked={form.status === 'completed'}
-                                    onCheckedChange={(checked) => {
-                                      handleStatusChange(form, 'company', checked === true);
-                                    }}
-                                  />
-                                </TableCell>
-                              </TableRow>
-                            ))}
+                          {filteredCompanyForms.map((form) => (
+                            <TableRow key={form.id} className="hover:bg-muted/50">
+                              <TableCell className="font-medium">{form.company_name}</TableCell>
+                              <TableCell>
+                                <div className="max-w-[180px] truncate">
+                                  <div>{form.contact_person}</div>
+                                  <div className="text-sm text-muted-foreground">{form.email}</div>
+                                  {form.phone && <div className="text-sm text-muted-foreground">{form.phone}</div>}
+                                </div>
+                              </TableCell>
+                              <TableCell>{form.industry}</TableCell>
+                              <TableCell>${form.budget.toLocaleString()}</TableCell>
+                              <TableCell className="max-w-[150px] truncate">{form.interests}</TableCell>
+                              <TableCell>
+                                <Badge variant={form.status === 'completed' ? 'default' : form.status === 'pending' ? 'outline' : 'destructive'}>
+                                  {form.status.charAt(0).toUpperCase() + form.status.slice(1)}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>{new Date(form.created_at).toLocaleDateString()}</TableCell>
+                              <TableCell>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  onClick={() => handleViewDetails(form, 'company')}
+                                  className="h-8 w-8 p-0"
+                                >
+                                  <Eye className="h-4 w-4" />
+                                  <span className="sr-only">View details</span>
+                                </Button>
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <Checkbox 
+                                  id={`complete-company-${form.id}`}
+                                  checked={form.status === 'completed'}
+                                  onCheckedChange={(checked) => {
+                                    handleStatusChange(form, 'company', checked === true);
+                                  }}
+                                />
+                              </TableCell>
+                            </TableRow>
+                          ))}
                         </TableBody>
                       </Table>
                     </div>
