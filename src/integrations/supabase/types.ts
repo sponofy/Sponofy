@@ -9,10 +9,109 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      client_requests: {
+        Row: {
+          amount: number
+          benefits: string
+          category: string
+          created_at: string
+          description: string
+          email: string
+          id: string
+          name: string
+          phone: string | null
+          project_name: string
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          benefits: string
+          category: string
+          created_at?: string
+          description: string
+          email: string
+          id?: string
+          name: string
+          phone?: string | null
+          project_name: string
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          benefits?: string
+          category?: string
+          created_at?: string
+          description?: string
+          email?: string
+          id?: string
+          name?: string
+          phone?: string | null
+          project_name?: string
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      company_offers: {
+        Row: {
+          additional_info: string | null
+          budget: number
+          company_name: string
+          contact_person: string
+          created_at: string
+          email: string
+          id: string
+          industry: string
+          interests: string
+          phone: string | null
+          requirements: string
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          additional_info?: string | null
+          budget: number
+          company_name: string
+          contact_person: string
+          created_at?: string
+          email: string
+          id?: string
+          industry: string
+          interests: string
+          phone?: string | null
+          requirements: string
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          additional_info?: string | null
+          budget?: number
+          company_name?: string
+          contact_person?: string
+          created_at?: string
+          email?: string
+          id?: string
+          industry?: string
+          interests?: string
+          phone?: string | null
+          requirements?: string
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
-      [_ in never]: never
+      dashboard_stats: {
+        Row: {
+          active_sponsors: number | null
+          completed_sponsorships: number | null
+          total_users: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never

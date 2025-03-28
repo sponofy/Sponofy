@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -16,40 +15,158 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
 
 const SponsorshipForms = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("need-sponsorship");
+  
+  const [clientForm, setClientForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    project_name: "",
+    category: "",
+    amount: "",
+    description: "",
+    benefits: ""
+  });
+  
+  const [companyForm, setCompanyForm] = useState({
+    company_name: "",
+    contact_person: "",
+    email: "",
+    phone: "",
+    industry: "",
+    budget: "",
+    interests: "",
+    requirements: "",
+    additional_info: ""
+  });
 
-  const handleClientSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleClientFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setClientForm({
+      ...clientForm,
+      [e.target.id.replace('client-', '')]: e.target.value
+    });
+  };
+
+  const handleCompanyFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setCompanyForm({
+      ...companyForm,
+      [e.target.id.replace('sponsor-', '')]: e.target.value
+    });
+  };
+
+  const handleSelectChange = (value: string, formType: string, field: string) => {
+    if (formType === 'client') {
+      setClientForm({
+        ...clientForm,
+        [field]: value
+      });
+    } else {
+      setCompanyForm({
+        ...companyForm,
+        [field]: value
+      });
+    }
+  };
+
+  const handleClientSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Simulate form submission
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      const { error } = await supabase.from('client_requests').insert({
+        name: clientForm.name,
+        email: clientForm.email,
+        phone: clientForm.phone || null,
+        project_name: clientForm.project_name,
+        category: clientForm.category,
+        amount: parseFloat(clientForm.amount),
+        description: clientForm.description,
+        benefits: clientForm.benefits
+      });
+      
+      if (error) throw error;
+      
       toast({
         title: "Form submitted",
         description: "We've received your sponsorship request. We'll be in touch soon!",
       });
+      
+      setClientForm({
+        name: "",
+        email: "",
+        phone: "",
+        project_name: "",
+        category: "",
+        amount: "",
+        description: "",
+        benefits: ""
+      });
+      
       (e.target as HTMLFormElement).reset();
-    }, 1500);
+    } catch (error) {
+      console.error("Error submitting client form:", error);
+      toast({
+        title: "Submission failed",
+        description: "There was an error submitting your request. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleCompanySubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleCompanySubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Simulate form submission
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      const { error } = await supabase.from('company_offers').insert({
+        company_name: companyForm.company_name,
+        contact_person: companyForm.contact_person,
+        email: companyForm.email,
+        phone: companyForm.phone || null,
+        industry: companyForm.industry,
+        budget: parseFloat(companyForm.budget),
+        interests: companyForm.interests,
+        requirements: companyForm.requirements,
+        additional_info: companyForm.additional_info || null
+      });
+      
+      if (error) throw error;
+      
       toast({
         title: "Form submitted",
         description: "Your sponsorship offer has been registered. We'll connect you with suitable clients!",
       });
+      
+      setCompanyForm({
+        company_name: "",
+        contact_person: "",
+        email: "",
+        phone: "",
+        industry: "",
+        budget: "",
+        interests: "",
+        requirements: "",
+        additional_info: ""
+      });
+      
       (e.target as HTMLFormElement).reset();
-    }, 1500);
+    } catch (error) {
+      console.error("Error submitting company form:", error);
+      toast({
+        title: "Submission failed",
+        description: "There was an error submitting your offer. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleTabChange = (value: string) => {
@@ -58,7 +175,6 @@ const SponsorshipForms = () => {
 
   return (
     <section id="sponsorship-forms" className="py-20 md:py-32 relative">
-      {/* Background Elements */}
       <div className="absolute inset-0 -z-10 overflow-hidden">
         <div className="absolute bottom-1/4 left-0 w-1/3 h-1/3 bg-gradient-to-tr from-primary/20 to-purple-300/20 dark:from-primary/10 dark:to-purple-700/10 rounded-full blur-3xl opacity-60"></div>
       </div>
@@ -130,40 +246,81 @@ const SponsorshipForms = () => {
                     <div className="grid gap-6 md:grid-cols-2">
                       <div className="space-y-2 text-left">
                         <Label htmlFor="client-name">Full Name</Label>
-                        <Input id="client-name" placeholder="John Doe" required />
+                        <Input 
+                          id="client-name" 
+                          placeholder="John Doe" 
+                          required 
+                          value={clientForm.name}
+                          onChange={handleClientFormChange}
+                        />
                       </div>
                       <div className="space-y-2 text-left">
                         <Label htmlFor="client-email">Email</Label>
-                        <Input id="client-email" type="email" placeholder="john@example.com" required />
+                        <Input 
+                          id="client-email" 
+                          type="email" 
+                          placeholder="john@example.com" 
+                          required 
+                          value={clientForm.email}
+                          onChange={handleClientFormChange}
+                        />
                       </div>
                     </div>
                     
                     <div className="grid gap-6 md:grid-cols-2">
                       <div className="space-y-2 text-left">
-                        <Label htmlFor="project-name">Project/Event Name</Label>
-                        <Input id="project-name" placeholder="Annual Tech Conference" required />
+                        <Label htmlFor="client-phone">Phone (Optional)</Label>
+                        <Input 
+                          id="client-phone" 
+                          placeholder="+1 (555) 123-4567" 
+                          value={clientForm.phone}
+                          onChange={handleClientFormChange}
+                        />
                       </div>
                       <div className="space-y-2 text-left">
-                        <Label htmlFor="client-category">Category</Label>
-                        <Select required>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select category" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="tech">Technology</SelectItem>
-                            <SelectItem value="arts">Arts & Culture</SelectItem>
-                            <SelectItem value="sports">Sports</SelectItem>
-                            <SelectItem value="education">Education</SelectItem>
-                            <SelectItem value="charity">Charity</SelectItem>
-                            <SelectItem value="other">Other</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <Label htmlFor="client-project_name">Project/Event Name</Label>
+                        <Input 
+                          id="client-project_name" 
+                          placeholder="Annual Tech Conference" 
+                          required 
+                          value={clientForm.project_name}
+                          onChange={handleClientFormChange}
+                        />
                       </div>
                     </div>
                     
-                    <div className="space-y-2 text-left">
-                      <Label htmlFor="client-amount">Sponsorship Amount Needed ($)</Label>
-                      <Input id="client-amount" type="number" placeholder="5000" required />
+                    <div className="grid gap-6 md:grid-cols-2">
+                      <div className="space-y-2 text-left">
+                        <Label htmlFor="client-category">Category</Label>
+                        <Select 
+                          required 
+                          value={clientForm.category}
+                          onValueChange={(value) => handleSelectChange(value, 'client', 'category')}
+                        >
+                          <SelectTrigger id="client-category">
+                            <SelectValue placeholder="Select category" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Technology">Technology</SelectItem>
+                            <SelectItem value="Arts & Culture">Arts & Culture</SelectItem>
+                            <SelectItem value="Sports">Sports</SelectItem>
+                            <SelectItem value="Education">Education</SelectItem>
+                            <SelectItem value="Charity">Charity</SelectItem>
+                            <SelectItem value="Other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2 text-left">
+                        <Label htmlFor="client-amount">Sponsorship Amount Needed ($)</Label>
+                        <Input 
+                          id="client-amount" 
+                          type="number" 
+                          placeholder="5000" 
+                          required 
+                          value={clientForm.amount}
+                          onChange={handleClientFormChange}
+                        />
+                      </div>
                     </div>
                     
                     <div className="space-y-2 text-left">
@@ -173,6 +330,8 @@ const SponsorshipForms = () => {
                         placeholder="Tell us about your project or event that needs sponsorship..." 
                         rows={5}
                         required
+                        value={clientForm.description}
+                        onChange={handleClientFormChange}
                       />
                     </div>
                     
@@ -183,6 +342,8 @@ const SponsorshipForms = () => {
                         placeholder="What benefits will sponsors receive? (e.g., logo placement, mentions, etc.)" 
                         rows={3}
                         required
+                        value={clientForm.benefits}
+                        onChange={handleClientFormChange}
                       />
                     </div>
                   </form>
@@ -216,63 +377,102 @@ const SponsorshipForms = () => {
                   <form id="company-form" onSubmit={handleCompanySubmit} className="space-y-6">
                     <div className="grid gap-6 md:grid-cols-2">
                       <div className="space-y-2 text-left">
-                        <Label htmlFor="company-name">Company Name</Label>
-                        <Input id="company-name" placeholder="Acme Corporation" required />
+                        <Label htmlFor="sponsor-company_name">Company Name</Label>
+                        <Input 
+                          id="sponsor-company_name" 
+                          placeholder="Acme Corporation" 
+                          required 
+                          value={companyForm.company_name}
+                          onChange={handleCompanyFormChange}
+                        />
                       </div>
                       <div className="space-y-2 text-left">
-                        <Label htmlFor="contact-person">Contact Person</Label>
-                        <Input id="contact-person" placeholder="Jane Smith" required />
+                        <Label htmlFor="sponsor-contact_person">Contact Person</Label>
+                        <Input 
+                          id="sponsor-contact_person" 
+                          placeholder="Jane Smith" 
+                          required 
+                          value={companyForm.contact_person}
+                          onChange={handleCompanyFormChange}
+                        />
                       </div>
                     </div>
                     
                     <div className="grid gap-6 md:grid-cols-2">
                       <div className="space-y-2 text-left">
-                        <Label htmlFor="company-email">Email</Label>
-                        <Input id="company-email" type="email" placeholder="jane@acmecorp.com" required />
+                        <Label htmlFor="sponsor-email">Email</Label>
+                        <Input 
+                          id="sponsor-email" 
+                          type="email" 
+                          placeholder="jane@acmecorp.com" 
+                          required 
+                          value={companyForm.email}
+                          onChange={handleCompanyFormChange}
+                        />
                       </div>
                       <div className="space-y-2 text-left">
-                        <Label htmlFor="company-phone">Phone</Label>
-                        <Input id="company-phone" placeholder="+1 (555) 123-4567" />
+                        <Label htmlFor="sponsor-phone">Phone (Optional)</Label>
+                        <Input 
+                          id="sponsor-phone" 
+                          placeholder="+1 (555) 123-4567" 
+                          value={companyForm.phone}
+                          onChange={handleCompanyFormChange}
+                        />
                       </div>
                     </div>
                     
                     <div className="grid gap-6 md:grid-cols-2">
                       <div className="space-y-2 text-left">
-                        <Label htmlFor="sponsor-category">Industry</Label>
-                        <Select required>
-                          <SelectTrigger>
+                        <Label htmlFor="sponsor-industry">Industry</Label>
+                        <Select 
+                          required 
+                          value={companyForm.industry}
+                          onValueChange={(value) => handleSelectChange(value, 'company', 'industry')}
+                        >
+                          <SelectTrigger id="sponsor-industry">
                             <SelectValue placeholder="Select industry" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="tech">Technology</SelectItem>
-                            <SelectItem value="finance">Finance</SelectItem>
-                            <SelectItem value="healthcare">Healthcare</SelectItem>
-                            <SelectItem value="retail">Retail</SelectItem>
-                            <SelectItem value="manufacturing">Manufacturing</SelectItem>
-                            <SelectItem value="other">Other</SelectItem>
+                            <SelectItem value="Technology">Technology</SelectItem>
+                            <SelectItem value="Finance">Finance</SelectItem>
+                            <SelectItem value="Healthcare">Healthcare</SelectItem>
+                            <SelectItem value="Retail">Retail</SelectItem>
+                            <SelectItem value="Manufacturing">Manufacturing</SelectItem>
+                            <SelectItem value="Other">Other</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                       <div className="space-y-2 text-left">
                         <Label htmlFor="sponsor-budget">Sponsorship Budget ($)</Label>
-                        <Input id="sponsor-budget" type="number" placeholder="10000" required />
+                        <Input 
+                          id="sponsor-budget" 
+                          type="number" 
+                          placeholder="10000" 
+                          required 
+                          value={companyForm.budget}
+                          onChange={handleCompanyFormChange}
+                        />
                       </div>
                     </div>
                     
                     <div className="space-y-2 text-left">
                       <Label htmlFor="sponsor-interests">Sponsorship Interests</Label>
-                      <Select required>
-                        <SelectTrigger>
+                      <Select 
+                        required 
+                        value={companyForm.interests}
+                        onValueChange={(value) => handleSelectChange(value, 'company', 'interests')}
+                      >
+                        <SelectTrigger id="sponsor-interests">
                           <SelectValue placeholder="What type of projects interest you?" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="tech-events">Technology Events</SelectItem>
-                          <SelectItem value="arts">Arts & Culture</SelectItem>
-                          <SelectItem value="sports">Sports</SelectItem>
-                          <SelectItem value="education">Education</SelectItem>
-                          <SelectItem value="charity">Charity</SelectItem>
-                          <SelectItem value="startups">Startups</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
+                          <SelectItem value="Technology Events">Technology Events</SelectItem>
+                          <SelectItem value="Arts & Culture">Arts & Culture</SelectItem>
+                          <SelectItem value="Sports">Sports</SelectItem>
+                          <SelectItem value="Education">Education</SelectItem>
+                          <SelectItem value="Charity">Charity</SelectItem>
+                          <SelectItem value="Startups">Startups</SelectItem>
+                          <SelectItem value="Other">Other</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -284,15 +484,19 @@ const SponsorshipForms = () => {
                         placeholder="What do you expect in return for your sponsorship? (e.g., brand visibility, customer acquisition, etc.)" 
                         rows={3}
                         required
+                        value={companyForm.requirements}
+                        onChange={handleCompanyFormChange}
                       />
                     </div>
                     
                     <div className="space-y-2 text-left">
-                      <Label htmlFor="sponsor-additional">Additional Information</Label>
+                      <Label htmlFor="sponsor-additional_info">Additional Information</Label>
                       <Textarea 
-                        id="sponsor-additional" 
+                        id="sponsor-additional_info" 
                         placeholder="Any other details you'd like to share about your sponsorship interests..." 
                         rows={3}
+                        value={companyForm.additional_info}
+                        onChange={handleCompanyFormChange}
                       />
                     </div>
                   </form>
