@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -39,9 +38,10 @@ import {
   CheckCircle,
   XCircle,
 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
+import { useClerk } from '@clerk/clerk-react';
 
-// Types for our form data
 type ClientRequest = {
   id: string;
   name: string;
@@ -77,7 +77,6 @@ type DashboardStats = {
   completed_sponsorships: number;
 };
 
-// React component for viewing details
 const ViewDetailsDialog = ({ 
   isOpen, 
   onClose, 
@@ -110,7 +109,6 @@ const ViewDetailsDialog = ({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           {type === 'client' ? (
-            // Client request details
             <>
               <Card>
                 <CardHeader className="pb-2">
@@ -157,7 +155,6 @@ const ViewDetailsDialog = ({
               </Card>
             </>
           ) : (
-            // Company offer details
             <>
               <Card>
                 <CardHeader className="pb-2">
@@ -220,12 +217,12 @@ const ViewDetailsDialog = ({
 const Dashboard = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { client: clerkClient } = useClerk();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [selectedItem, setSelectedItem] = useState<ClientRequest | CompanyOffer | null>(null);
   const [detailsType, setDetailsType] = useState<'client' | 'company'>('client');
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   
-  // State for dashboard data
   const [clientForms, setClientForms] = useState<ClientRequest[]>([]);
   const [companyForms, setCompanyForms] = useState<CompanyOffer[]>([]);
   const [stats, setStats] = useState<DashboardStats>({
@@ -234,8 +231,8 @@ const Dashboard = () => {
     completed_sponsorships: 0
   });
   const [loading, setLoading] = useState(true);
+  const [categoryFilter, setcategoryFilter] = useState<string | null>(null);
 
-  // Charts data
   const [performanceData, setPerformanceData] = useState([
     { name: 'Jan', value: 0 },
     { name: 'Feb', value: 0 },
@@ -256,7 +253,6 @@ const Dashboard = () => {
   const COLORS = ['#8b5cf6', '#6366f1', '#3b82f6', '#0ea5e9', '#14b8a6'];
 
   useEffect(() => {
-    // Check if user is authenticated
     const adminAuth = sessionStorage.getItem('adminAuth');
     if (adminAuth !== 'true') {
       toast({
@@ -268,14 +264,26 @@ const Dashboard = () => {
     } else {
       setIsAuthenticated(true);
       fetchData();
+      fetchClerkUserCount();
       setupRealtimeSubscription();
     }
   }, [navigate, toast]);
 
+  const fetchClerkUserCount = async () => {
+    try {
+      const userCount = await clerkClient.users.getCount();
+      setStats(prevStats => ({
+        ...prevStats,
+        total_users: userCount.total
+      }));
+    } catch (error) {
+      console.error('Error fetching Clerk user count:', error);
+    }
+  };
+
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Fetch client requests
       const { data: clientData, error: clientError } = await supabase
         .from('client_requests')
         .select('*')
@@ -284,7 +292,6 @@ const Dashboard = () => {
       if (clientError) throw clientError;
       setClientForms(clientData || []);
       
-      // Fetch company offers
       const { data: companyData, error: companyError } = await supabase
         .from('company_offers')
         .select('*')
@@ -293,7 +300,6 @@ const Dashboard = () => {
       if (companyError) throw companyError;
       setCompanyForms(companyData || []);
       
-      // Fetch stats
       const { data: statsData, error: statsError } = await supabase
         .from('dashboard_stats')
         .select('*')
@@ -304,10 +310,13 @@ const Dashboard = () => {
       }
       
       if (statsData) {
-        setStats(statsData);
+        setStats(prevStats => ({
+          ...prevStats,
+          active_sponsors: statsData.active_sponsors,
+          completed_sponsorships: statsData.completed_sponsorships
+        }));
       }
       
-      // Update chart data
       updateChartData(clientData || []);
       
     } catch (error) {
@@ -323,7 +332,6 @@ const Dashboard = () => {
   };
 
   const setupRealtimeSubscription = () => {
-    // Subscribe to clients table changes
     const clientChannel = supabase
       .channel('clients-changes')
       .on('postgres_changes', {
@@ -335,7 +343,6 @@ const Dashboard = () => {
       })
       .subscribe();
       
-    // Subscribe to companies table changes
     const companyChannel = supabase
       .channel('companies-changes')
       .on('postgres_changes', {
@@ -354,11 +361,9 @@ const Dashboard = () => {
   };
 
   const updateChartData = (clientData: ClientRequest[]) => {
-    // Update performance data (monthly counts)
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const currentYear = new Date().getFullYear();
     
-    // Count submissions by month
     const monthlyCounts = Array(12).fill(0);
     clientData.forEach(request => {
       const date = new Date(request.created_at);
@@ -367,15 +372,13 @@ const Dashboard = () => {
       }
     });
     
-    // Create chart data
     const performanceData = monthNames.map((name, index) => ({
       name,
       value: monthlyCounts[index]
-    })).slice(0, 6); // Show first 6 months
+    })).slice(0, 6);
     
     setPerformanceData(performanceData);
     
-    // Update pie chart data (category distribution)
     const categoryMap: Record<string, number> = {
       'Technology': 0,
       'Sports': 0,
@@ -425,13 +428,87 @@ const Dashboard = () => {
     navigate('/admin');
   };
 
+  const handleStatusChange = async (item: ClientRequest | CompanyOffer, type: 'client' | 'company', completed: boolean) => {
+    const newStatus = completed ? 'completed' : 'pending';
+    const tableName = type === 'client' ? 'client_requests' : 'company_offers';
+    
+    try {
+      const { error } = await supabase
+        .from(tableName)
+        .update({ status: newStatus })
+        .eq('id', item.id);
+      
+      if (error) throw error;
+      
+      if (type === 'client') {
+        setClientForms(prev => 
+          prev.map(form => form.id === item.id ? { ...form, status: newStatus } : form)
+        );
+      } else {
+        setCompanyForms(prev => 
+          prev.map(form => form.id === item.id ? { ...form, status: newStatus } : form)
+        );
+      }
+      
+      if (completed) {
+        const { data: currentStats } = await supabase
+          .from('dashboard_stats')
+          .select('completed_sponsorships')
+          .single();
+          
+        const newCount = (currentStats?.completed_sponsorships || 0) + 1;
+        
+        await supabase
+          .from('dashboard_stats')
+          .update({ completed_sponsorships: newCount })
+          .eq('total_users', stats.total_users);
+          
+        setStats(prev => ({
+          ...prev,
+          completed_sponsorships: newCount
+        }));
+      } else {
+        if (item.status === 'completed') {
+          const { data: currentStats } = await supabase
+            .from('dashboard_stats')
+            .select('completed_sponsorships')
+            .single();
+            
+          const newCount = Math.max((currentStats?.completed_sponsorships || 0) - 1, 0);
+          
+          await supabase
+            .from('dashboard_stats')
+            .update({ completed_sponsorships: newCount })
+            .eq('total_users', stats.total_users);
+            
+          setStats(prev => ({
+            ...prev,
+            completed_sponsorships: newCount
+          }));
+        }
+      }
+      
+      toast({
+        title: `Status ${completed ? 'completed' : 'marked as pending'}`,
+        description: `The ${type} has been updated successfully.`,
+      });
+      
+    } catch (error) {
+      console.error('Error updating status:', error);
+      toast({
+        title: "Update failed",
+        description: "Failed to update the status",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (!isAuthenticated) {
-    return null; // Don't render anything if not authenticated
+    return null;
   }
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      {/* Header */}
       <header className="bg-card shadow-sm border-b border-border">
         <div className="container px-4 md:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center space-x-4">
@@ -457,10 +534,8 @@ const Dashboard = () => {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="flex-1 container px-4 md:px-6 py-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          {/* User Card */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -468,7 +543,7 @@ const Dashboard = () => {
           >
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+                <CardTitle className="text-sm font-medium text-left">Total Users</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center space-x-4">
@@ -476,15 +551,14 @@ const Dashboard = () => {
                     <Users className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <div className="text-2xl font-bold">{stats.total_users}</div>
-                    <p className="text-xs text-muted-foreground">From client and company forms</p>
+                    <div className="text-2xl font-bold text-left">{stats.total_users}</div>
+                    <p className="text-xs text-muted-foreground text-left">From Clerk authentication</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
           </motion.div>
 
-          {/* Sponsors Card */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -492,7 +566,7 @@ const Dashboard = () => {
           >
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Active Sponsors</CardTitle>
+                <CardTitle className="text-sm font-medium text-left">Active Sponsors</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center space-x-4">
@@ -500,15 +574,14 @@ const Dashboard = () => {
                     <TrendingUp className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <div className="text-2xl font-bold">{stats.active_sponsors}</div>
-                    <p className="text-xs text-muted-foreground">Companies offering sponsorship</p>
+                    <div className="text-2xl font-bold text-left">{stats.active_sponsors}</div>
+                    <p className="text-xs text-muted-foreground text-left">Companies offering sponsorship</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
           </motion.div>
 
-          {/* Sponsorships Card */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -516,7 +589,7 @@ const Dashboard = () => {
           >
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Completed Sponsorships</CardTitle>
+                <CardTitle className="text-sm font-medium text-left">Completed Sponsorships</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center space-x-4">
@@ -524,8 +597,8 @@ const Dashboard = () => {
                     <PieChartIcon className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <div className="text-2xl font-bold">{stats.completed_sponsorships}</div>
-                    <p className="text-xs text-muted-foreground">Successfully matched sponsorships</p>
+                    <div className="text-2xl font-bold text-left">{stats.completed_sponsorships}</div>
+                    <p className="text-xs text-muted-foreground text-left">Successfully matched sponsorships</p>
                   </div>
                 </div>
               </CardContent>
@@ -533,7 +606,6 @@ const Dashboard = () => {
           </motion.div>
         </div>
 
-        {/* Charts */}
         <motion.div
           className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8"
           initial={{ opacity: 0, y: 20 }}
@@ -542,8 +614,8 @@ const Dashboard = () => {
         >
           <Card>
             <CardHeader>
-              <CardTitle>Performance Overview</CardTitle>
-              <CardDescription>Monthly sponsorship requests</CardDescription>
+              <CardTitle className="text-left">Performance Overview</CardTitle>
+              <CardDescription className="text-left">Monthly sponsorship requests</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="h-80 w-full">
@@ -565,8 +637,8 @@ const Dashboard = () => {
 
           <Card>
             <CardHeader>
-              <CardTitle>Sponsorship Categories</CardTitle>
-              <CardDescription>Distribution by industry</CardDescription>
+              <CardTitle className="text-left">Sponsorship Categories</CardTitle>
+              <CardDescription className="text-left">Distribution by industry</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="h-80 w-full">
@@ -594,7 +666,6 @@ const Dashboard = () => {
           </Card>
         </motion.div>
 
-        {/* Form Data */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -602,8 +673,8 @@ const Dashboard = () => {
         >
           <Card>
             <CardHeader>
-              <CardTitle>Form Submissions</CardTitle>
-              <CardDescription>View and manage sponsorship requests and offers</CardDescription>
+              <CardTitle className="text-left">Form Submissions</CardTitle>
+              <CardDescription className="text-left">View and manage sponsorship requests and offers</CardDescription>
             </CardHeader>
             <CardContent>
               <Tabs defaultValue="clients">
@@ -619,6 +690,28 @@ const Dashboard = () => {
                     <div className="text-center py-8 text-muted-foreground">No client requests found</div>
                   ) : (
                     <div className="overflow-x-auto">
+                      <div className="flex flex-wrap gap-4 mb-4">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => setcategoryFilter(null)}
+                          className={categoryFilter === null ? "bg-primary/10" : ""}
+                        >
+                          All Categories
+                        </Button>
+                        {Array.from(new Set(clientForms.map(form => form.category))).map((category) => (
+                          <Button 
+                            key={category} 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => setcategoryFilter(category)}
+                            className={categoryFilter === category ? "bg-primary/10" : ""}
+                          >
+                            {category}
+                          </Button>
+                        ))}
+                      </div>
+                      
                       <Table>
                         <TableHeader>
                           <TableRow>
@@ -629,41 +722,53 @@ const Dashboard = () => {
                             <TableHead>Amount</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead>Date</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
+                            <TableHead>Actions</TableHead>
+                            <TableHead className="text-center">Completed</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {clientForms.map((form) => (
-                            <TableRow key={form.id} className="hover:bg-muted/50">
-                              <TableCell className="font-medium">{form.name}</TableCell>
-                              <TableCell>
-                                <div className="max-w-[180px] truncate">
-                                  <div>{form.email}</div>
-                                  {form.phone && <div className="text-sm text-muted-foreground">{form.phone}</div>}
-                                </div>
-                              </TableCell>
-                              <TableCell className="max-w-[150px] truncate">{form.project_name}</TableCell>
-                              <TableCell>{form.category}</TableCell>
-                              <TableCell>${form.amount.toLocaleString()}</TableCell>
-                              <TableCell>
-                                <Badge variant={form.status === 'completed' ? 'default' : form.status === 'pending' ? 'outline' : 'destructive'}>
-                                  {form.status.charAt(0).toUpperCase() + form.status.slice(1)}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>{new Date(form.created_at).toLocaleDateString()}</TableCell>
-                              <TableCell className="text-right">
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm" 
-                                  onClick={() => handleViewDetails(form, 'client')}
-                                  className="h-8 w-8 p-0"
-                                >
-                                  <Eye className="h-4 w-4" />
-                                  <span className="sr-only">View details</span>
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))}
+                          {clientForms
+                            .filter(form => categoryFilter === null || form.category === categoryFilter)
+                            .map((form) => (
+                              <TableRow key={form.id} className="hover:bg-muted/50">
+                                <TableCell className="font-medium">{form.name}</TableCell>
+                                <TableCell>
+                                  <div className="max-w-[180px] truncate">
+                                    <div>{form.email}</div>
+                                    {form.phone && <div className="text-sm text-muted-foreground">{form.phone}</div>}
+                                  </div>
+                                </TableCell>
+                                <TableCell className="max-w-[150px] truncate">{form.project_name}</TableCell>
+                                <TableCell>{form.category}</TableCell>
+                                <TableCell>${form.amount.toLocaleString()}</TableCell>
+                                <TableCell>
+                                  <Badge variant={form.status === 'completed' ? 'default' : form.status === 'pending' ? 'outline' : 'destructive'}>
+                                    {form.status.charAt(0).toUpperCase() + form.status.slice(1)}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell>{new Date(form.created_at).toLocaleDateString()}</TableCell>
+                                <TableCell>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    onClick={() => handleViewDetails(form, 'client')}
+                                    className="h-8 w-8 p-0"
+                                  >
+                                    <Eye className="h-4 w-4" />
+                                    <span className="sr-only">View details</span>
+                                  </Button>
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  <Checkbox 
+                                    id={`complete-client-${form.id}`}
+                                    checked={form.status === 'completed'}
+                                    onCheckedChange={(checked) => {
+                                      handleStatusChange(form, 'client', checked === true);
+                                    }}
+                                  />
+                                </TableCell>
+                              </TableRow>
+                            ))}
                         </TableBody>
                       </Table>
                     </div>
@@ -677,6 +782,28 @@ const Dashboard = () => {
                     <div className="text-center py-8 text-muted-foreground">No company offers found</div>
                   ) : (
                     <div className="overflow-x-auto">
+                      <div className="flex flex-wrap gap-4 mb-4">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => setcategoryFilter(null)}
+                          className={categoryFilter === null ? "bg-primary/10" : ""}
+                        >
+                          All Industries
+                        </Button>
+                        {Array.from(new Set(companyForms.map(form => form.industry))).map((industry) => (
+                          <Button 
+                            key={industry} 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => setcategoryFilter(industry)}
+                            className={categoryFilter === industry ? "bg-primary/10" : ""}
+                          >
+                            {industry}
+                          </Button>
+                        ))}
+                      </div>
+                      
                       <Table>
                         <TableHeader>
                           <TableRow>
@@ -687,42 +814,54 @@ const Dashboard = () => {
                             <TableHead>Interests</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead>Date</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
+                            <TableHead>Actions</TableHead>
+                            <TableHead className="text-center">Completed</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {companyForms.map((form) => (
-                            <TableRow key={form.id} className="hover:bg-muted/50">
-                              <TableCell className="font-medium">{form.company_name}</TableCell>
-                              <TableCell>
-                                <div className="max-w-[180px] truncate">
-                                  <div>{form.contact_person}</div>
-                                  <div className="text-sm text-muted-foreground">{form.email}</div>
-                                  {form.phone && <div className="text-sm text-muted-foreground">{form.phone}</div>}
-                                </div>
-                              </TableCell>
-                              <TableCell>{form.industry}</TableCell>
-                              <TableCell>${form.budget.toLocaleString()}</TableCell>
-                              <TableCell className="max-w-[150px] truncate">{form.interests}</TableCell>
-                              <TableCell>
-                                <Badge variant={form.status === 'completed' ? 'default' : form.status === 'pending' ? 'outline' : 'destructive'}>
-                                  {form.status.charAt(0).toUpperCase() + form.status.slice(1)}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>{new Date(form.created_at).toLocaleDateString()}</TableCell>
-                              <TableCell className="text-right">
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm" 
-                                  onClick={() => handleViewDetails(form, 'company')}
-                                  className="h-8 w-8 p-0"
-                                >
-                                  <Eye className="h-4 w-4" />
-                                  <span className="sr-only">View details</span>
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))}
+                          {companyForms
+                            .filter(form => categoryFilter === null || form.industry === categoryFilter)
+                            .map((form) => (
+                              <TableRow key={form.id} className="hover:bg-muted/50">
+                                <TableCell className="font-medium">{form.company_name}</TableCell>
+                                <TableCell>
+                                  <div className="max-w-[180px] truncate">
+                                    <div>{form.contact_person}</div>
+                                    <div className="text-sm text-muted-foreground">{form.email}</div>
+                                    {form.phone && <div className="text-sm text-muted-foreground">{form.phone}</div>}
+                                  </div>
+                                </TableCell>
+                                <TableCell>{form.industry}</TableCell>
+                                <TableCell>${form.budget.toLocaleString()}</TableCell>
+                                <TableCell className="max-w-[150px] truncate">{form.interests}</TableCell>
+                                <TableCell>
+                                  <Badge variant={form.status === 'completed' ? 'default' : form.status === 'pending' ? 'outline' : 'destructive'}>
+                                    {form.status.charAt(0).toUpperCase() + form.status.slice(1)}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell>{new Date(form.created_at).toLocaleDateString()}</TableCell>
+                                <TableCell>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    onClick={() => handleViewDetails(form, 'company')}
+                                    className="h-8 w-8 p-0"
+                                  >
+                                    <Eye className="h-4 w-4" />
+                                    <span className="sr-only">View details</span>
+                                  </Button>
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  <Checkbox 
+                                    id={`complete-company-${form.id}`}
+                                    checked={form.status === 'completed'}
+                                    onCheckedChange={(checked) => {
+                                      handleStatusChange(form, 'company', checked === true);
+                                    }}
+                                  />
+                                </TableCell>
+                              </TableRow>
+                            ))}
                         </TableBody>
                       </Table>
                     </div>
@@ -734,7 +873,6 @@ const Dashboard = () => {
         </motion.div>
       </main>
 
-      {/* Details Dialog */}
       <ViewDetailsDialog 
         isOpen={isDetailsOpen} 
         onClose={() => setIsDetailsOpen(false)} 
