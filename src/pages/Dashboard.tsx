@@ -787,14 +787,14 @@ const Dashboard = () => {
                           <div className="space-y-2">
                             <p className="text-sm font-medium">Category</p>
                             <Select 
-                              value={categoryFilter || ''} 
-                              onValueChange={(value) => setCategoryFilter(value === '' ? null : value)}
+                              value={categoryFilter || 'all'} 
+                              onValueChange={(value) => setCategoryFilter(value === 'all' ? null : value)}
                             >
                               <SelectTrigger className="w-[200px]">
                                 <SelectValue placeholder="All Categories" />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="">All Categories</SelectItem>
+                                <SelectItem value="all">All Categories</SelectItem>
                                 {uniqueClientCategories.map(category => (
                                   <SelectItem key={category} value={category}>{category}</SelectItem>
                                 ))}
@@ -930,14 +930,14 @@ const Dashboard = () => {
                           <div className="space-y-2">
                             <p className="text-sm font-medium">Industry</p>
                             <Select 
-                              value={categoryFilter || ''} 
-                              onValueChange={(value) => setCategoryFilter(value === '' ? null : value)}
+                              value={categoryFilter || 'all'} 
+                              onValueChange={(value) => setCategoryFilter(value === 'all' ? null : value)}
                             >
                               <SelectTrigger className="w-[200px]">
                                 <SelectValue placeholder="All Industries" />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="">All Industries</SelectItem>
+                                <SelectItem value="all">All Industries</SelectItem>
                                 {uniqueCompanyIndustries.map(industry => (
                                   <SelectItem key={industry} value={industry}>{industry}</SelectItem>
                                 ))}
