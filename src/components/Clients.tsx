@@ -1,6 +1,7 @@
 
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
+import { useEffect, useState, useRef } from "react";
 
 const Clients = () => {
   const clients = [
@@ -25,11 +26,61 @@ const Clients = () => {
       logo: "/lovable-uploads/8d94bf34-49a8-4ae9-adbd-a0d23d2d1f43.png"
     }
   ];
+  
+  // For smooth scrolling animation
+  const [scrollPosition, setScrollPosition] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const scrollSpeed = 0.5; // Pixels per frame (lower is slower)
+  
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    
+    let animationFrameId: number;
+    let direction = 1; // 1 for right, -1 for left
+    
+    const animate = () => {
+      if (!container) return;
+      
+      setScrollPosition(prevPos => {
+        const newPos = prevPos + (scrollSpeed * direction);
+        const maxScroll = container.scrollWidth - container.clientWidth;
+        
+        // Change direction when reaching edges
+        if (newPos >= maxScroll) {
+          direction = -1;
+          return maxScroll;
+        } else if (newPos <= 0) {
+          direction = 1;
+          return 0;
+        }
+        
+        return newPos;
+      });
+      
+      animationFrameId = requestAnimationFrame(animate);
+    };
+    
+    animationFrameId = requestAnimationFrame(animate);
+    
+    return () => {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+    };
+  }, []);
+  
+  useEffect(() => {
+    const container = containerRef.current;
+    if (container) {
+      container.scrollLeft = scrollPosition;
+    }
+  }, [scrollPosition]);
 
   return (
     <motion.section
       id="clients"
-      className="py-16 md:py-24"
+      className="py-16 md:py-24 overflow-hidden"
       initial={{ opacity: 0 }}
       whileInView={{ opacity: 1 }}
       viewport={{ once: true }}
@@ -45,14 +96,20 @@ const Clients = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 max-w-6xl mx-auto">
-          {clients.map((client) => (
+        <div 
+          ref={containerRef}
+          className="flex gap-6 max-w-6xl mx-auto overflow-hidden"
+          style={{ scrollBehavior: 'smooth' }}
+        >
+          {/* Duplicate clients for continuous scrolling effect */}
+          {[...clients, ...clients].map((client, index) => (
             <motion.div
-              key={client.name}
+              key={`${client.name}-${index}`}
+              className="flex-shrink-0"
               whileHover={{ y: -5 }}
               transition={{ type: "spring", stiffness: 400 }}
             >
-              <Card className="h-full overflow-hidden border bg-background/50 backdrop-blur-sm dark:bg-card/30 hover:shadow-md transition-all duration-300">
+              <Card className="h-full overflow-hidden border bg-background/50 backdrop-blur-sm dark:bg-card/30 hover:shadow-md transition-all duration-300 w-40">
                 <CardContent className="p-6 flex items-center justify-center h-full">
                   <div className="relative w-full h-16 md:h-20">
                     <img

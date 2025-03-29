@@ -31,6 +31,10 @@ import {
 } from "@/components/ui/select";
 import { Pagination, PaginationContent, PaginationItem, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { supabase } from "@/integrations/supabase/client";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ChartContainer, ChartLegend } from "@/components/ui/chart";
+import { AreaChart, BarChart, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Area, Bar, ResponsiveContainer } from "recharts";
+import { Phone } from "lucide-react";
 
 // Define types for our form data
 interface ClientRequest {
@@ -42,6 +46,7 @@ interface ClientRequest {
   amount: number;
   status: string;
   created_at: string;
+  phone: string | null;
 }
 
 interface CompanyOffer {
@@ -53,12 +58,24 @@ interface CompanyOffer {
   budget: number;
   status: string;
   created_at: string;
+  phone: string | null;
 }
 
 interface StatsData {
   total_users: number;
   active_sponsors: number;
   completed_sponsorships: number;
+}
+
+interface MonthlyStats {
+  month: string;
+  clientRequests: number;
+  companyOffers: number;
+}
+
+interface CategoryStats {
+  name: string;
+  count: number;
 }
 
 const Dashboard = () => {
@@ -74,11 +91,16 @@ const Dashboard = () => {
   const [companyOffers, setCompanyOffers] = useState<CompanyOffer[]>([]);
   const [statusFilter, setStatusFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
-
-  // Filter for search and filters
   const [searchTerm, setSearchTerm] = useState("");
+  
+  // Separate pagination for client requests and company offers
+  const [currentClientPage, setCurrentClientPage] = useState(1);
+  const [currentCompanyPage, setCurrentCompanyPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+  
+  // Chart data
+  const [monthlyStats, setMonthlyStats] = useState<MonthlyStats[]>([]);
+  const [categoryStats, setCategoryStats] = useState<CategoryStats[]>([]);
 
   useEffect(() => {
     fetchData();
@@ -109,6 +131,19 @@ const Dashboard = () => {
         console.error('Error fetching client requests:', clientError);
       } else {
         setClientRequests(clientData as ClientRequest[]);
+        
+        // Process category stats for clients
+        const categories = clientData.reduce((acc: Record<string, number>, item: ClientRequest) => {
+          acc[item.category] = (acc[item.category] || 0) + 1;
+          return acc;
+        }, {});
+        
+        const categoryStatsArray: CategoryStats[] = Object.keys(categories).map(key => ({
+          name: key,
+          count: categories[key]
+        }));
+        
+        setCategoryStats(categoryStatsArray);
       }
 
       // Fetch company offers
@@ -121,7 +156,24 @@ const Dashboard = () => {
         console.error('Error fetching company offers:', companyError);
       } else {
         setCompanyOffers(companyData as CompanyOffer[]);
+        
+        // Add industry stats to category stats
+        const industries = companyData.reduce((acc: Record<string, number>, item: CompanyOffer) => {
+          acc[item.industry] = (acc[item.industry] || 0) + 1;
+          return acc;
+        }, {});
+        
+        const industryStatsArray: CategoryStats[] = Object.keys(industries).map(key => ({
+          name: key,
+          count: industries[key]
+        }));
+        
+        setCategoryStats(prev => [...prev, ...industryStatsArray]);
       }
+      
+      // Generate monthly stats for the past 6 months
+      generateMonthlyStats(clientData || [], companyData || []);
+      
     } catch (error) {
       console.error('Error fetching data:', error);
       toast({
@@ -132,6 +184,43 @@ const Dashboard = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+  
+  const generateMonthlyStats = (clientData: ClientRequest[], companyData: CompanyOffer[]) => {
+    // Get the past 6 months
+    const months = [];
+    const today = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const month = new Date(today.getFullYear(), today.getMonth() - i, 1);
+      months.push({
+        month: month.toLocaleString('default', { month: 'short' }),
+        date: month
+      });
+    }
+    
+    // Count submissions for each month
+    const monthlyData = months.map(monthObj => {
+      const month = monthObj.date;
+      const nextMonth = new Date(month.getFullYear(), month.getMonth() + 1, 1);
+      
+      const clientCount = clientData.filter(item => {
+        const itemDate = new Date(item.created_at);
+        return itemDate >= month && itemDate < nextMonth;
+      }).length;
+      
+      const companyCount = companyData.filter(item => {
+        const itemDate = new Date(item.created_at);
+        return itemDate >= month && itemDate < nextMonth;
+      }).length;
+      
+      return {
+        month: monthObj.month,
+        clientRequests: clientCount,
+        companyOffers: companyCount
+      };
+    });
+    
+    setMonthlyStats(monthlyData);
   };
 
   const handleStatusChange = async (id: string, newStatus: string, isClientRequest: boolean) => {
@@ -169,7 +258,7 @@ const Dashboard = () => {
             .from('dashboard_stats')
             .update({
               completed_sponsorships: updatedStats.completed_sponsorships
-            } as Partial<StatsData>)
+            } as unknown as Record<string, unknown>)
             .eq('total_users', statsData.total_users); // Using unique field to identify the row
         }
       } else {
@@ -191,7 +280,7 @@ const Dashboard = () => {
             .from('dashboard_stats')
             .update({
               completed_sponsorships: updatedStats.completed_sponsorships
-            } as Partial<StatsData>)
+            } as unknown as Record<string, unknown>)
             .eq('total_users', statsData.total_users); // Using unique field to identify the row
         }
       }
@@ -231,18 +320,17 @@ const Dashboard = () => {
     return matchesSearch && matchesStatus && matchesIndustry;
   });
 
-  // Combined filtered items for pagination
-  const filteredItems = [...filteredClientRequests, ...filteredCompanyOffers];
-
-  // Pagination
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = filteredItems.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
-
-  const paginate = (pageNumber: number) => {
-    setCurrentPage(pageNumber);
-  };
+  // Pagination for client requests
+  const indexOfLastClient = currentClientPage * itemsPerPage;
+  const indexOfFirstClient = indexOfLastClient - itemsPerPage;
+  const currentClientItems = filteredClientRequests.slice(indexOfFirstClient, indexOfLastClient);
+  const totalClientPages = Math.ceil(filteredClientRequests.length / itemsPerPage);
+  
+  // Pagination for company offers
+  const indexOfLastCompany = currentCompanyPage * itemsPerPage;
+  const indexOfFirstCompany = indexOfLastCompany - itemsPerPage;
+  const currentCompanyItems = filteredCompanyOffers.slice(indexOfFirstCompany, indexOfLastCompany);
+  const totalCompanyPages = Math.ceil(filteredCompanyOffers.length / itemsPerPage);
 
   // Calculate total for statistics
   const totalRequests = clientRequests.length + companyOffers.length;
@@ -312,6 +400,49 @@ const Dashboard = () => {
                 </CardContent>
               </Card>
             </div>
+            
+            {/* Charts Section */}
+            <div className="grid gap-6 md:grid-cols-2">
+              {/* Monthly Submissions Chart */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Submissions - Last 6 Months</CardTitle>
+                  <CardDescription>Monthly trend of submissions</CardDescription>
+                </CardHeader>
+                <CardContent className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={monthlyStats}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="month" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="clientRequests" name="Client Requests" fill="#8884d8" />
+                      <Bar dataKey="companyOffers" name="Company Offers" fill="#82ca9d" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+              
+              {/* Category Distribution Chart */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Category Distribution</CardTitle>
+                  <CardDescription>Submissions by category/industry</CardDescription>
+                </CardHeader>
+                <CardContent className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={categoryStats} layout="vertical">
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis type="number" />
+                      <YAxis type="category" dataKey="name" />
+                      <Tooltip />
+                      <Bar dataKey="count" fill="#8884d8" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            </div>
 
             <Separator />
 
@@ -365,138 +496,259 @@ const Dashboard = () => {
               </div>
             </div>
 
-            {/* Submissions Table */}
+            {/* Tabbed Submissions Tables */}
             <Card>
               <CardHeader>
                 <CardTitle>Submissions</CardTitle>
                 <CardDescription>
-                  {filteredItems.length} {filteredItems.length === 1 ? 'entry' : 'entries'} found
+                  Total: {filteredClientRequests.length + filteredCompanyOffers.length} entries
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {isLoading ? (
-                  <div className="flex justify-center items-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-                  </div>
-                ) : currentItems.length > 0 ? (
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="w-12">#</TableHead>
-                          <TableHead>Name / Company</TableHead>
-                          <TableHead>Email</TableHead>
-                          <TableHead>Project / Contact</TableHead>
-                          <TableHead>Category / Industry</TableHead>
-                          <TableHead>Amount</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead className="text-right">Action</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {currentItems.map((item, index) => {
-                          // Determine if the item is a client request or company offer
-                          const isClientRequest = 'project_name' in item;
-                          const clientItem = isClientRequest ? item as ClientRequest : null;
-                          const companyItem = !isClientRequest ? item as CompanyOffer : null;
-
-                          return (
-                            <TableRow key={item.id}>
-                              <TableCell>{indexOfFirstItem + index + 1}</TableCell>
-                              <TableCell className="font-medium">
-                                {isClientRequest ? clientItem?.name : companyItem?.company_name}
-                              </TableCell>
-                              <TableCell>{item.email}</TableCell>
-                              <TableCell>
-                                {isClientRequest ? clientItem?.project_name : companyItem?.contact_person}
-                              </TableCell>
-                              <TableCell>
-                                {isClientRequest ? clientItem?.category : companyItem?.industry}
-                              </TableCell>
-                              <TableCell>
-                                ${isClientRequest ? clientItem?.amount.toLocaleString() : companyItem?.budget.toLocaleString()}
-                              </TableCell>
-                              <TableCell>
-                                <span className={`px-2 py-1 rounded-full text-xs capitalize ${
-                                  item.status === 'approved' ? 'bg-green-100 text-green-800' :
-                                  item.status === 'rejected' ? 'bg-red-100 text-red-800' : 
-                                  item.status === 'completed' ? 'bg-blue-100 text-blue-800' :
-                                  'bg-yellow-100 text-yellow-800'
-                                }`}>
-                                  {item.status || 'pending'}
-                                </span>
-                              </TableCell>
-                              <TableCell className="text-right">
-                                <Select 
-                                  defaultValue={item.status || 'pending'}
-                                  onValueChange={(value) => handleStatusChange(
-                                    item.id, 
-                                    value, 
-                                    isClientRequest
-                                  )}
-                                >
-                                  <SelectTrigger className="w-32">
-                                    <SelectValue placeholder="Set status" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="pending">Pending</SelectItem>
-                                    <SelectItem value="approved">Approve</SelectItem>
-                                    <SelectItem value="rejected">Reject</SelectItem>
-                                    <SelectItem value="completed">Complete</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </TableCell>
+                <Tabs defaultValue="client" className="w-full">
+                  <TabsList className="mb-4">
+                    <TabsTrigger value="client">Client Requests ({filteredClientRequests.length})</TabsTrigger>
+                    <TabsTrigger value="company">Company Offers ({filteredCompanyOffers.length})</TabsTrigger>
+                  </TabsList>
+                  
+                  {/* Client Requests Tab */}
+                  <TabsContent value="client">
+                    {isLoading ? (
+                      <div className="flex justify-center items-center py-12">
+                        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                      </div>
+                    ) : currentClientItems.length > 0 ? (
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="w-12">#</TableHead>
+                              <TableHead>Name</TableHead>
+                              <TableHead>Email</TableHead>
+                              <TableHead>Phone</TableHead>
+                              <TableHead>Project</TableHead>
+                              <TableHead>Category</TableHead>
+                              <TableHead>Amount</TableHead>
+                              <TableHead>Status</TableHead>
+                              <TableHead className="text-right">Action</TableHead>
                             </TableRow>
-                          );
-                        })}
-                      </TableBody>
-                    </Table>
-                  </div>
-                ) : (
-                  <div className="text-center py-12 text-muted-foreground">
-                    No entries match your filters.
-                  </div>
-                )}
-
-                {/* Pagination */}
-                {totalPages > 1 && (
-                  <div className="mt-6">
-                    <Pagination>
-                      <PaginationContent>
-                        <PaginationItem>
-                          <PaginationPrevious 
-                            onClick={() => paginate(Math.max(1, currentPage - 1))}
-                            className="cursor-pointer"
-                            aria-disabled={currentPage === 1}
-                          />
-                        </PaginationItem>
+                          </TableHeader>
+                          <TableBody>
+                            {currentClientItems.map((item, index) => (
+                              <TableRow key={item.id}>
+                                <TableCell>{indexOfFirstClient + index + 1}</TableCell>
+                                <TableCell className="font-medium">{item.name}</TableCell>
+                                <TableCell>{item.email}</TableCell>
+                                <TableCell>
+                                  {item.phone ? (
+                                    <div className="flex items-center gap-1">
+                                      <Phone size={14} />
+                                      <span>{item.phone}</span>
+                                    </div>
+                                  ) : (
+                                    <span className="text-muted-foreground text-sm">Not provided</span>
+                                  )}
+                                </TableCell>
+                                <TableCell>{item.project_name}</TableCell>
+                                <TableCell>{item.category}</TableCell>
+                                <TableCell>${item.amount.toLocaleString()}</TableCell>
+                                <TableCell>
+                                  <span className={`px-2 py-1 rounded-full text-xs capitalize ${
+                                    item.status === 'approved' ? 'bg-green-100 text-green-800' :
+                                    item.status === 'rejected' ? 'bg-red-100 text-red-800' : 
+                                    item.status === 'completed' ? 'bg-blue-100 text-blue-800' :
+                                    'bg-yellow-100 text-yellow-800'
+                                  }`}>
+                                    {item.status || 'pending'}
+                                  </span>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  <Select 
+                                    defaultValue={item.status || 'pending'}
+                                    onValueChange={(value) => handleStatusChange(item.id, value, true)}
+                                  >
+                                    <SelectTrigger className="w-32">
+                                      <SelectValue placeholder="Set status" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="pending">Pending</SelectItem>
+                                      <SelectItem value="approved">Approve</SelectItem>
+                                      <SelectItem value="rejected">Reject</SelectItem>
+                                      <SelectItem value="completed">Complete</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
                         
-                        {[...Array(totalPages)].map((_, i) => (
-                          <PaginationItem key={i}>
-                            <button
-                              className={`h-9 w-9 rounded-md text-sm ${
-                                currentPage === i + 1 
-                                ? "bg-primary text-primary-foreground" 
-                                : "text-foreground hover:bg-muted hover:text-foreground"
-                              }`}
-                              onClick={() => paginate(i + 1)}
-                            >
-                              {i + 1}
-                            </button>
-                          </PaginationItem>
-                        ))}
+                        {/* Client Pagination */}
+                        {totalClientPages > 1 && (
+                          <div className="mt-6">
+                            <Pagination>
+                              <PaginationContent>
+                                <PaginationItem>
+                                  <PaginationPrevious 
+                                    onClick={() => setCurrentClientPage(Math.max(1, currentClientPage - 1))}
+                                    className="cursor-pointer"
+                                    aria-disabled={currentClientPage === 1}
+                                  />
+                                </PaginationItem>
+                                
+                                {[...Array(totalClientPages)].map((_, i) => (
+                                  <PaginationItem key={i}>
+                                    <button
+                                      className={`h-9 w-9 rounded-md text-sm ${
+                                        currentClientPage === i + 1 
+                                        ? "bg-primary text-primary-foreground" 
+                                        : "text-foreground hover:bg-muted hover:text-foreground"
+                                      }`}
+                                      onClick={() => setCurrentClientPage(i + 1)}
+                                    >
+                                      {i + 1}
+                                    </button>
+                                  </PaginationItem>
+                                ))}
+                                
+                                <PaginationItem>
+                                  <PaginationNext 
+                                    onClick={() => setCurrentClientPage(Math.min(totalClientPages, currentClientPage + 1))}
+                                    className="cursor-pointer"
+                                    aria-disabled={currentClientPage === totalClientPages}
+                                  />
+                                </PaginationItem>
+                              </PaginationContent>
+                            </Pagination>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="text-center py-12 text-muted-foreground">
+                        No client requests match your filters.
+                      </div>
+                    )}
+                  </TabsContent>
+                  
+                  {/* Company Offers Tab */}
+                  <TabsContent value="company">
+                    {isLoading ? (
+                      <div className="flex justify-center items-center py-12">
+                        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                      </div>
+                    ) : currentCompanyItems.length > 0 ? (
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="w-12">#</TableHead>
+                              <TableHead>Company</TableHead>
+                              <TableHead>Contact Person</TableHead>
+                              <TableHead>Email</TableHead>
+                              <TableHead>Phone</TableHead>
+                              <TableHead>Industry</TableHead>
+                              <TableHead>Budget</TableHead>
+                              <TableHead>Status</TableHead>
+                              <TableHead className="text-right">Action</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {currentCompanyItems.map((item, index) => (
+                              <TableRow key={item.id}>
+                                <TableCell>{indexOfFirstCompany + index + 1}</TableCell>
+                                <TableCell className="font-medium">{item.company_name}</TableCell>
+                                <TableCell>{item.contact_person}</TableCell>
+                                <TableCell>{item.email}</TableCell>
+                                <TableCell>
+                                  {item.phone ? (
+                                    <div className="flex items-center gap-1">
+                                      <Phone size={14} />
+                                      <span>{item.phone}</span>
+                                    </div>
+                                  ) : (
+                                    <span className="text-muted-foreground text-sm">Not provided</span>
+                                  )}
+                                </TableCell>
+                                <TableCell>{item.industry}</TableCell>
+                                <TableCell>${item.budget.toLocaleString()}</TableCell>
+                                <TableCell>
+                                  <span className={`px-2 py-1 rounded-full text-xs capitalize ${
+                                    item.status === 'approved' ? 'bg-green-100 text-green-800' :
+                                    item.status === 'rejected' ? 'bg-red-100 text-red-800' : 
+                                    item.status === 'completed' ? 'bg-blue-100 text-blue-800' :
+                                    'bg-yellow-100 text-yellow-800'
+                                  }`}>
+                                    {item.status || 'pending'}
+                                  </span>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  <Select 
+                                    defaultValue={item.status || 'pending'}
+                                    onValueChange={(value) => handleStatusChange(item.id, value, false)}
+                                  >
+                                    <SelectTrigger className="w-32">
+                                      <SelectValue placeholder="Set status" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="pending">Pending</SelectItem>
+                                      <SelectItem value="approved">Approve</SelectItem>
+                                      <SelectItem value="rejected">Reject</SelectItem>
+                                      <SelectItem value="completed">Complete</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
                         
-                        <PaginationItem>
-                          <PaginationNext 
-                            onClick={() => paginate(Math.min(totalPages, currentPage + 1))}
-                            className="cursor-pointer"
-                            aria-disabled={currentPage === totalPages}
-                          />
-                        </PaginationItem>
-                      </PaginationContent>
-                    </Pagination>
-                  </div>
-                )}
+                        {/* Company Pagination */}
+                        {totalCompanyPages > 1 && (
+                          <div className="mt-6">
+                            <Pagination>
+                              <PaginationContent>
+                                <PaginationItem>
+                                  <PaginationPrevious 
+                                    onClick={() => setCurrentCompanyPage(Math.max(1, currentCompanyPage - 1))}
+                                    className="cursor-pointer"
+                                    aria-disabled={currentCompanyPage === 1}
+                                  />
+                                </PaginationItem>
+                                
+                                {[...Array(totalCompanyPages)].map((_, i) => (
+                                  <PaginationItem key={i}>
+                                    <button
+                                      className={`h-9 w-9 rounded-md text-sm ${
+                                        currentCompanyPage === i + 1 
+                                        ? "bg-primary text-primary-foreground" 
+                                        : "text-foreground hover:bg-muted hover:text-foreground"
+                                      }`}
+                                      onClick={() => setCurrentCompanyPage(i + 1)}
+                                    >
+                                      {i + 1}
+                                    </button>
+                                  </PaginationItem>
+                                ))}
+                                
+                                <PaginationItem>
+                                  <PaginationNext 
+                                    onClick={() => setCurrentCompanyPage(Math.min(totalCompanyPages, currentCompanyPage + 1))}
+                                    className="cursor-pointer"
+                                    aria-disabled={currentCompanyPage === totalCompanyPages}
+                                  />
+                                </PaginationItem>
+                              </PaginationContent>
+                            </Pagination>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="text-center py-12 text-muted-foreground">
+                        No company offers match your filters.
+                      </div>
+                    )}
+                  </TabsContent>
+                </Tabs>
               </CardContent>
             </Card>
           </div>
