@@ -30,7 +30,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Pagination, PaginationContent, PaginationItem, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
-import { useUser } from "@clerk/clerk-react";
 import { supabase } from "@/integrations/supabase/client";
 
 // Define types for our form data
@@ -63,7 +62,6 @@ interface StatsData {
 }
 
 const Dashboard = () => {
-  const { user } = useUser();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
@@ -157,17 +155,19 @@ const Dashboard = () => {
           prev.map(item => item.id === id ? { ...item, status: newStatus } : item)
         );
         
-        // If status changed to completed, increment counter
+        // If status changed to completed, update the stats
         if (newStatus === 'completed') {
-          setStatsData(prev => ({
-            ...prev,
-            completed_sponsorships: (prev.completed_sponsorships || 0) + 1
-          }));
+          const updatedStats = {
+            ...statsData,
+            completed_sponsorships: (statsData.completed_sponsorships || 0) + 1
+          };
+          
+          setStatsData(updatedStats);
           
           // Update stats in database
           await supabase
             .from('dashboard_stats')
-            .update({ completed_sponsorships: (statsData.completed_sponsorships || 0) + 1 })
+            .update({ completed_sponsorships: updatedStats.completed_sponsorships })
             .eq('total_users', statsData.total_users); // Using unique field to identify the row
         }
       } else {
@@ -177,15 +177,17 @@ const Dashboard = () => {
         
         // If status changed to completed for company offer
         if (newStatus === 'completed') {
-          setStatsData(prev => ({
-            ...prev,
-            completed_sponsorships: (prev.completed_sponsorships || 0) + 1
-          }));
+          const updatedStats = {
+            ...statsData,
+            completed_sponsorships: (statsData.completed_sponsorships || 0) + 1
+          };
+          
+          setStatsData(updatedStats);
           
           // Update stats in database
           await supabase
             .from('dashboard_stats')
-            .update({ completed_sponsorships: (statsData.completed_sponsorships || 0) + 1 })
+            .update({ completed_sponsorships: updatedStats.completed_sponsorships })
             .eq('total_users', statsData.total_users); // Using unique field to identify the row
         }
       }
@@ -243,12 +245,6 @@ const Dashboard = () => {
   const pendingRequests = [...clientRequests, ...companyOffers].filter(item => item.status === 'pending').length;
   const completedRequests = [...clientRequests, ...companyOffers].filter(item => item.status === 'completed').length;
 
-  // Find the max amount value for client requests
-  const maxAmount = Math.max(
-    ...clientRequests.map(request => request.amount),
-    ...companyOffers.map(offer => offer.budget)
-  );
-
   return (
     <div className="flex flex-col min-h-screen">
       {/* Header */}
@@ -263,13 +259,6 @@ const Dashboard = () => {
             <Button size="sm" variant="outline" onClick={() => navigate("/")}>
               Back to Site
             </Button>
-            {user && (
-              <div className="ml-4 flex items-center gap-2">
-                <div className="text-sm">
-                  <span className="font-semibold">{user.fullName || user.username}</span>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </header>
