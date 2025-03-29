@@ -8,7 +8,6 @@ import { ArrowLeft } from "lucide-react";
 const SignUp = () => {
   const [isLoading, setIsLoading] = useState(true);
 
-  // Use useEffect with a timeout to simulate the loading state
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
@@ -18,7 +17,7 @@ const SignUp = () => {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-background via-background to-background/95">
+    <div className="min-h-screen flex flex-col">
       <div className="p-4">
         <Link 
           to="/" 
@@ -29,12 +28,12 @@ const SignUp = () => {
         </Link>
       </div>
 
-      <div className="flex-1 flex items-center justify-center p-4">
+      <div className="flex-grow flex items-center justify-center px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="w-full max-w-xl"
+          className="w-full max-w-md"
         >
           <div className="text-center mb-8">
             <motion.h1 
@@ -59,7 +58,7 @@ const SignUp = () => {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.4, duration: 0.5 }}
-            className="rounded-xl overflow-hidden shadow-xl"
+            className="shadow-lg rounded-lg bg-white"
           >
             {isLoading && (
               <div className="flex justify-center items-center py-12">

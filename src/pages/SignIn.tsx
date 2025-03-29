@@ -1,16 +1,14 @@
 
 import { useState, useEffect } from "react";
 import { SignIn as ClerkSignIn } from "@clerk/clerk-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 
 const SignIn = () => {
-  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Use useEffect with a timeout to simulate the loading state
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 1500);
@@ -19,7 +17,7 @@ const SignIn = () => {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-background via-background to-background/95">
+    <div className="min-h-screen flex flex-col">
       <div className="p-4">
         <Link 
           to="/" 
@@ -30,12 +28,12 @@ const SignIn = () => {
         </Link>
       </div>
 
-      <div className="flex-1 flex items-center justify-center p-4">
+      <div className="flex-grow flex items-center justify-center px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="w-full max-w-xl"
+          className="w-full max-w-md"
         >
           <div className="text-center mb-8">
             <motion.h1 
@@ -60,7 +58,7 @@ const SignIn = () => {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.4, duration: 0.5 }}
-            className="rounded-xl overflow-hidden shadow-xl"
+            className="shadow-lg rounded-lg bg-white"
           >
             {isLoading && (
               <div className="flex justify-center items-center py-12">
