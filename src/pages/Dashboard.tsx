@@ -29,12 +29,43 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Pagination, PaginationContent, PaginationItem, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChartContainer, ChartLegend } from "@/components/ui/chart";
-import { AreaChart, BarChart, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Area, Bar, ResponsiveContainer } from "recharts";
-import { Phone } from "lucide-react";
+import { 
+  AreaChart, 
+  BarChart, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  Legend, 
+  Area, 
+  Bar, 
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Sector
+} from "recharts";
+import { Phone, Trash } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 // Define types for our form data
 interface ClientRequest {
@@ -76,7 +107,11 @@ interface MonthlyStats {
 interface CategoryStats {
   name: string;
   count: number;
+  color?: string;
 }
+
+// COLORS for the pie chart
+const COLORS = ['#8884d8', '#83a6ed', '#8dd1e1', '#82ca9d', '#a4de6c', '#d0ed57', '#ffc658'];
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -92,6 +127,14 @@ const Dashboard = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [dateFilter, setDateFilter] = useState("all");
+  
+  // For delete confirmation
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<{id: string, isClient: boolean} | null>(null);
+  
+  // For pie chart active sector
+  const [activeIndex, setActiveIndex] = useState(0);
   
   // Separate pagination for client requests and company offers
   const [currentClientPage, setCurrentClientPage] = useState(1);
@@ -138,9 +181,10 @@ const Dashboard = () => {
           return acc;
         }, {});
         
-        const categoryStatsArray: CategoryStats[] = Object.keys(categories).map(key => ({
+        const categoryStatsArray: CategoryStats[] = Object.keys(categories).map((key, index) => ({
           name: key,
-          count: categories[key]
+          count: categories[key],
+          color: COLORS[index % COLORS.length]
         }));
         
         setCategoryStats(categoryStatsArray);
@@ -163,9 +207,10 @@ const Dashboard = () => {
           return acc;
         }, {});
         
-        const industryStatsArray: CategoryStats[] = Object.keys(industries).map(key => ({
+        const industryStatsArray: CategoryStats[] = Object.keys(industries).map((key, index) => ({
           name: key,
-          count: industries[key]
+          count: industries[key],
+          color: COLORS[(index + Object.keys(categories || {}).length) % COLORS.length]
         }));
         
         setCategoryStats(prev => [...prev, ...industryStatsArray]);
@@ -258,7 +303,7 @@ const Dashboard = () => {
             .from('dashboard_stats')
             .update({
               completed_sponsorships: updatedStats.completed_sponsorships
-            } as unknown as Record<string, unknown>)
+            } as Partial<StatsData>)
             .eq('total_users', statsData.total_users); // Using unique field to identify the row
         }
       } else {
@@ -280,7 +325,7 @@ const Dashboard = () => {
             .from('dashboard_stats')
             .update({
               completed_sponsorships: updatedStats.completed_sponsorships
-            } as unknown as Record<string, unknown>)
+            } as Partial<StatsData>)
             .eq('total_users', statsData.total_users); // Using unique field to identify the row
         }
       }
@@ -294,7 +339,135 @@ const Dashboard = () => {
     }
   };
 
-  // Filter client requests based on search term, status and category
+  const handleDelete = (id: string, isClient: boolean) => {
+    setItemToDelete({ id, isClient });
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!itemToDelete) return;
+    
+    const { id, isClient } = itemToDelete;
+    const tableName = isClient ? 'client_requests' : 'company_offers';
+    
+    try {
+      const { error } = await supabase
+        .from(tableName)
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Request deleted",
+        description: "The request has been deleted successfully.",
+      });
+
+      // Update local state to remove the deleted item
+      if (isClient) {
+        setClientRequests(prev => prev.filter(item => item.id !== id));
+      } else {
+        setCompanyOffers(prev => prev.filter(item => item.id !== id));
+      }
+      
+      // Reset pagination if needed
+      if (isClient && currentClientPage > Math.ceil((clientRequests.length - 1) / itemsPerPage)) {
+        setCurrentClientPage(Math.max(1, currentClientPage - 1));
+      }
+      
+      if (!isClient && currentCompanyPage > Math.ceil((companyOffers.length - 1) / itemsPerPage)) {
+        setCurrentCompanyPage(Math.max(1, currentCompanyPage - 1));
+      }
+      
+    } catch (error) {
+      console.error("Error deleting request:", error);
+      toast({
+        title: "Delete failed",
+        description: "Failed to delete the request.",
+        variant: "destructive",
+      });
+    } finally {
+      setDeleteDialogOpen(false);
+      setItemToDelete(null);
+    }
+  };
+
+  // Filter requests based on date range
+  const filterByDate = (date: string) => {
+    const today = new Date();
+    const startDate = new Date();
+    
+    switch(date) {
+      case "today":
+        // Today only
+        startDate.setHours(0, 0, 0, 0);
+        break;
+      case "week":
+        // This week (last 7 days)
+        startDate.setDate(today.getDate() - 7);
+        break;
+      case "month":
+        // This month
+        startDate.setMonth(today.getMonth() - 1);
+        break;
+      case "sixMonths":
+        // Past 6 months
+        startDate.setMonth(today.getMonth() - 6);
+        break;
+      case "year":
+        // This year
+        startDate.setFullYear(today.getFullYear() - 1);
+        break;
+      default:
+        // All time (no filtering)
+        return true;
+    }
+    
+    return (item: ClientRequest | CompanyOffer) => {
+      const itemDate = new Date(item.created_at);
+      return itemDate >= startDate && itemDate <= today;
+    };
+  };
+
+  // Custom active shape for pie chart
+  const renderActiveShape = (props: any) => {
+    const { cx, cy, innerRadius, outerRadius, startAngle, endAngle,
+      fill, payload, percent, value } = props;
+
+    return (
+      <g>
+        <text x={cx} y={cy} dy={-20} textAnchor="middle" fill={fill} className="text-sm font-medium">
+          {payload.name}
+        </text>
+        <text x={cx} y={cy} dy={8} textAnchor="middle" fill="#999" className="text-xs">
+          Count: {value}
+        </text>
+        <text x={cx} y={cy} dy={25} textAnchor="middle" fill="#999" className="text-xs">
+          {`(${(percent * 100).toFixed(0)}%)`}
+        </text>
+        <Sector
+          cx={cx}
+          cy={cy}
+          innerRadius={innerRadius}
+          outerRadius={outerRadius + 10}
+          startAngle={startAngle}
+          endAngle={endAngle}
+          fill={fill}
+        />
+        <Sector
+          cx={cx}
+          cy={cy}
+          startAngle={startAngle}
+          endAngle={endAngle}
+          innerRadius={outerRadius + 6}
+          outerRadius={outerRadius + 10}
+          fill={fill}
+        />
+      </g>
+    );
+  };
+
+  // Filter client requests based on search term, status, category and date
   const filteredClientRequests = clientRequests.filter(request => {
     const matchesSearch = searchTerm === "" || 
       request.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -303,11 +476,12 @@ const Dashboard = () => {
     
     const matchesStatus = statusFilter === "all" || request.status === statusFilter;
     const matchesCategory = categoryFilter === "all" || request.category === categoryFilter;
+    const matchesDate = dateFilter === "all" || filterByDate(dateFilter)(request);
     
-    return matchesSearch && matchesStatus && matchesCategory;
+    return matchesSearch && matchesStatus && matchesCategory && matchesDate;
   });
 
-  // Filter company offers based on search term and status
+  // Filter company offers based on search term, status, category and date
   const filteredCompanyOffers = companyOffers.filter(offer => {
     const matchesSearch = searchTerm === "" || 
       offer.company_name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -316,8 +490,9 @@ const Dashboard = () => {
     
     const matchesStatus = statusFilter === "all" || offer.status === statusFilter;
     const matchesIndustry = categoryFilter === "all" || offer.industry === categoryFilter;
+    const matchesDate = dateFilter === "all" || filterByDate(dateFilter)(offer);
     
-    return matchesSearch && matchesStatus && matchesIndustry;
+    return matchesSearch && matchesStatus && matchesIndustry && matchesDate;
   });
 
   // Pagination for client requests
@@ -424,7 +599,7 @@ const Dashboard = () => {
                 </CardContent>
               </Card>
               
-              {/* Category Distribution Chart */}
+              {/* Category Distribution Pie Chart */}
               <Card>
                 <CardHeader>
                   <CardTitle>Category Distribution</CardTitle>
@@ -432,13 +607,25 @@ const Dashboard = () => {
                 </CardHeader>
                 <CardContent className="h-80">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={categoryStats} layout="vertical">
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis type="number" />
-                      <YAxis type="category" dataKey="name" />
+                    <PieChart>
+                      <Pie
+                        activeIndex={activeIndex}
+                        activeShape={renderActiveShape}
+                        data={categoryStats}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="count"
+                        onMouseEnter={(_, index) => setActiveIndex(index)}
+                      >
+                        {categoryStats.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
                       <Tooltip />
-                      <Bar dataKey="count" fill="#8884d8" />
-                    </BarChart>
+                    </PieChart>
                   </ResponsiveContainer>
                 </CardContent>
               </Card>
@@ -447,7 +634,7 @@ const Dashboard = () => {
             <Separator />
 
             {/* Filter Controls */}
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-4">
               <div>
                 <Label htmlFor="search">Search</Label>
                 <Input
@@ -491,6 +678,22 @@ const Dashboard = () => {
                     <SelectItem value="Manufacturing">Manufacturing</SelectItem>
                     <SelectItem value="Charity">Charity</SelectItem>
                     <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="dateFilter">Time Period</Label>
+                <Select value={dateFilter} onValueChange={setDateFilter}>
+                  <SelectTrigger id="dateFilter" className="mt-1">
+                    <SelectValue placeholder="Filter by time" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Time</SelectItem>
+                    <SelectItem value="today">Today</SelectItem>
+                    <SelectItem value="week">This Week</SelectItem>
+                    <SelectItem value="month">This Month</SelectItem>
+                    <SelectItem value="sixMonths">Past 6 Months</SelectItem>
+                    <SelectItem value="year">This Year</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -563,20 +766,29 @@ const Dashboard = () => {
                                   </span>
                                 </TableCell>
                                 <TableCell className="text-right">
-                                  <Select 
-                                    defaultValue={item.status || 'pending'}
-                                    onValueChange={(value) => handleStatusChange(item.id, value, true)}
-                                  >
-                                    <SelectTrigger className="w-32">
-                                      <SelectValue placeholder="Set status" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="pending">Pending</SelectItem>
-                                      <SelectItem value="approved">Approve</SelectItem>
-                                      <SelectItem value="rejected">Reject</SelectItem>
-                                      <SelectItem value="completed">Complete</SelectItem>
-                                    </SelectContent>
-                                  </Select>
+                                  <div className="flex justify-end gap-2">
+                                    <Select 
+                                      defaultValue={item.status || 'pending'}
+                                      onValueChange={(value) => handleStatusChange(item.id, value, true)}
+                                    >
+                                      <SelectTrigger className="w-32">
+                                        <SelectValue placeholder="Set status" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="pending">Pending</SelectItem>
+                                        <SelectItem value="approved">Approve</SelectItem>
+                                        <SelectItem value="rejected">Reject</SelectItem>
+                                        <SelectItem value="completed">Complete</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                    <Button 
+                                      variant="outline" 
+                                      size="icon"
+                                      onClick={() => handleDelete(item.id, true)}
+                                    >
+                                      <Trash size={16} className="text-red-500" />
+                                    </Button>
+                                  </div>
                                 </TableCell>
                               </TableRow>
                             ))}
@@ -682,20 +894,29 @@ const Dashboard = () => {
                                   </span>
                                 </TableCell>
                                 <TableCell className="text-right">
-                                  <Select 
-                                    defaultValue={item.status || 'pending'}
-                                    onValueChange={(value) => handleStatusChange(item.id, value, false)}
-                                  >
-                                    <SelectTrigger className="w-32">
-                                      <SelectValue placeholder="Set status" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="pending">Pending</SelectItem>
-                                      <SelectItem value="approved">Approve</SelectItem>
-                                      <SelectItem value="rejected">Reject</SelectItem>
-                                      <SelectItem value="completed">Complete</SelectItem>
-                                    </SelectContent>
-                                  </Select>
+                                  <div className="flex justify-end gap-2">
+                                    <Select 
+                                      defaultValue={item.status || 'pending'}
+                                      onValueChange={(value) => handleStatusChange(item.id, value, false)}
+                                    >
+                                      <SelectTrigger className="w-32">
+                                        <SelectValue placeholder="Set status" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="pending">Pending</SelectItem>
+                                        <SelectItem value="approved">Approve</SelectItem>
+                                        <SelectItem value="rejected">Reject</SelectItem>
+                                        <SelectItem value="completed">Complete</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                    <Button 
+                                      variant="outline" 
+                                      size="icon"
+                                      onClick={() => handleDelete(item.id, false)}
+                                    >
+                                      <Trash size={16} className="text-red-500" />
+                                    </Button>
+                                  </div>
                                 </TableCell>
                               </TableRow>
                             ))}
@@ -754,6 +975,27 @@ const Dashboard = () => {
           </div>
         </div>
       </main>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete this request from the database.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDelete}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

@@ -1,7 +1,12 @@
 
+import { useRef, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
-import { useEffect, useState, useRef } from "react";
+import { 
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+} from "@/components/ui/carousel";
 
 const Clients = () => {
   const clients = [
@@ -27,55 +32,42 @@ const Clients = () => {
     }
   ];
   
-  // For smooth scrolling animation
-  const [scrollPosition, setScrollPosition] = useState(0);
+  // Reference to the scroll container
   const containerRef = useRef<HTMLDivElement>(null);
-  const scrollSpeed = 0.5; // Pixels per frame (lower is slower)
   
+  // Auto-scroll effect
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
     
-    let animationFrameId: number;
-    let direction = 1; // 1 for right, -1 for left
+    let animationId: number | null = null;
+    let scrollPosition = 0;
+    const scrollWidth = container.scrollWidth;
+    const clientWidth = container.clientWidth;
+    const speed = 0.5; // pixels per frame
     
-    const animate = () => {
-      if (!container) return;
-      
-      setScrollPosition(prevPos => {
-        const newPos = prevPos + (scrollSpeed * direction);
-        const maxScroll = container.scrollWidth - container.clientWidth;
+    const scroll = () => {
+      if (container) {
+        scrollPosition += speed;
         
-        // Change direction when reaching edges
-        if (newPos >= maxScroll) {
-          direction = -1;
-          return maxScroll;
-        } else if (newPos <= 0) {
-          direction = 1;
-          return 0;
+        // Reset position when we've scrolled through all content
+        if (scrollPosition >= scrollWidth - clientWidth) {
+          scrollPosition = 0;
         }
         
-        return newPos;
-      });
-      
-      animationFrameId = requestAnimationFrame(animate);
+        container.scrollLeft = scrollPosition;
+        animationId = requestAnimationFrame(scroll);
+      }
     };
     
-    animationFrameId = requestAnimationFrame(animate);
+    animationId = requestAnimationFrame(scroll);
     
     return () => {
-      if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
+      if (animationId) {
+        cancelAnimationFrame(animationId);
       }
     };
   }, []);
-  
-  useEffect(() => {
-    const container = containerRef.current;
-    if (container) {
-      container.scrollLeft = scrollPosition;
-    }
-  }, [scrollPosition]);
 
   return (
     <motion.section
@@ -96,13 +88,13 @@ const Clients = () => {
           </p>
         </div>
 
+        {/* Scrolling Clients Section */}
         <div 
           ref={containerRef}
           className="flex gap-6 max-w-6xl mx-auto overflow-hidden"
-          style={{ scrollBehavior: 'smooth' }}
         >
-          {/* Duplicate clients for continuous scrolling effect */}
-          {[...clients, ...clients].map((client, index) => (
+          {/* Duplicate logos for infinite scroll effect */}
+          {[...clients, ...clients, ...clients].map((client, index) => (
             <motion.div
               key={`${client.name}-${index}`}
               className="flex-shrink-0"
