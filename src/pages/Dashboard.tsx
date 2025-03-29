@@ -164,10 +164,12 @@ const Dashboard = () => {
           
           setStatsData(updatedStats);
           
-          // Update stats in database
+          // Update stats in database with proper typing
           await supabase
             .from('dashboard_stats')
-            .update({ completed_sponsorships: updatedStats.completed_sponsorships })
+            .update({
+              completed_sponsorships: updatedStats.completed_sponsorships
+            } as Partial<StatsData>)
             .eq('total_users', statsData.total_users); // Using unique field to identify the row
         }
       } else {
@@ -184,10 +186,12 @@ const Dashboard = () => {
           
           setStatsData(updatedStats);
           
-          // Update stats in database
+          // Update stats in database with proper typing
           await supabase
             .from('dashboard_stats')
-            .update({ completed_sponsorships: updatedStats.completed_sponsorships })
+            .update({
+              completed_sponsorships: updatedStats.completed_sponsorships
+            } as Partial<StatsData>)
             .eq('total_users', statsData.total_users); // Using unique field to identify the row
         }
       }
