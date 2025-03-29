@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { SignIn, SignUp } from "@clerk/clerk-react";
 import { Dialog, DialogContent, DialogClose } from "@/components/ui/dialog";
+import { useNavigate } from "react-router-dom";
 import { X } from "lucide-react";
 
 interface AuthDialogProps {
@@ -12,20 +13,27 @@ interface AuthDialogProps {
 
 const AuthDialog = ({ isOpen, onOpenChange, initialView = "signIn" }: AuthDialogProps) => {
   const [activeTab, setActiveTab] = useState<"signIn" | "signUp">(initialView);
+  const navigate = useNavigate();
 
   useEffect(() => {
     setActiveTab(initialView);
   }, [initialView]);
 
+  // Close dialog and redirect to appropriate page
+  const handleClerkComplete = () => {
+    onOpenChange(false);
+    navigate('/dashboard');
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[380px] p-0 overflow-hidden bg-white max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[420px] p-0 overflow-hidden bg-white max-h-[90vh] overflow-y-auto">
         <DialogClose className="absolute right-3 top-3 rounded-sm opacity-70 hover:opacity-100 z-10">
           <X className="h-4 w-4 text-gray-500" />
           <span className="sr-only">Close</span>
         </DialogClose>
         
-        <div className="px-6 py-4">
+        <div className="py-4">
           <div className="text-center mb-3">
             <h2 className="text-xl font-bold text-gray-800">
               {activeTab === "signIn" ? "Sign in to Sponofy" : "Sign up for Sponofy"}
@@ -39,56 +47,16 @@ const AuthDialog = ({ isOpen, onOpenChange, initialView = "signIn" }: AuthDialog
           
           <div className="py-2">
             {activeTab === "signIn" ? (
-              <SignIn 
-                appearance={{
-                  elements: {
-                    rootBox: "w-full",
-                    card: "shadow-none p-0 w-full",
-                    headerTitle: "hidden",
-                    headerSubtitle: "hidden",
-                    socialButtonsBlockButton: "w-full border border-gray-300 hover:bg-gray-50 mb-2 text-gray-700 font-medium text-sm py-2",
-                    socialButtonsBlockButtonText: "text-sm",
-                    socialButtonsProviderIcon: "w-5 h-5",
-                    dividerLine: "bg-gray-200",
-                    dividerText: "text-gray-400 text-xs",
-                    formFieldLabel: "text-gray-700 text-sm",
-                    formFieldInput: "w-full border border-gray-300 focus:ring-0 focus:border-gray-400 rounded-md text-sm py-1.5",
-                    formButtonPrimary: "w-full bg-gray-800 hover:bg-gray-700 text-white py-2 rounded-md font-medium mt-1 text-sm",
-                    footerActionText: "text-xs text-gray-500",
-                    footerActionLink: "text-xs text-gray-800 hover:text-gray-700 font-medium",
-                    alert: "bg-red-50 border border-red-100 text-red-600 text-xs py-1",
-                    identityPreviewText: "text-gray-700 text-sm",
-                    identityPreviewEditButton: "text-gray-600 hover:text-gray-800 text-sm",
-                    formFieldInputShowPasswordButton: "scale-75 origin-center",
-                    otpCodeFieldInput: "text-sm h-8 w-8",
-                  }
-                }}
+              <SignIn
+                afterSignInUrl="/dashboard"
+                routing="path"
+                path="/sign-in"
               />
             ) : (
               <SignUp
-                appearance={{
-                  elements: {
-                    rootBox: "w-full",
-                    card: "shadow-none p-0 w-full",
-                    headerTitle: "hidden",
-                    headerSubtitle: "hidden",
-                    socialButtonsBlockButton: "w-full border border-gray-300 hover:bg-gray-50 mb-2 text-gray-700 font-medium text-sm py-2",
-                    socialButtonsBlockButtonText: "text-sm",
-                    socialButtonsProviderIcon: "w-5 h-5",
-                    dividerLine: "bg-gray-200",
-                    dividerText: "text-gray-400 text-xs",
-                    formFieldLabel: "text-gray-700 text-sm",
-                    formFieldInput: "w-full border border-gray-300 focus:ring-0 focus:border-gray-400 rounded-md text-sm py-1.5",
-                    formButtonPrimary: "w-full bg-gray-800 hover:bg-gray-700 text-white py-2 rounded-md font-medium mt-1 text-sm",
-                    footerActionText: "text-xs text-gray-500",
-                    footerActionLink: "text-xs text-gray-800 hover:text-gray-700 font-medium",
-                    alert: "bg-red-50 border border-red-100 text-red-600 text-xs py-1",
-                    identityPreviewText: "text-gray-700 text-sm",
-                    identityPreviewEditButton: "text-gray-600 hover:text-gray-800 text-sm",
-                    formFieldInputShowPasswordButton: "scale-75 origin-center",
-                    otpCodeFieldInput: "text-sm h-8 w-8",
-                  }
-                }}
+                afterSignUpUrl="/dashboard"
+                routing="path"
+                path="/sign-up"  
               />
             )}
           </div>

@@ -16,9 +16,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { useUser } from "@clerk/clerk-react";
+import { Link } from "react-router-dom";
+import { LogIn, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const SponsorshipForms = () => {
   const { toast } = useToast();
+  const { isSignedIn, user } = useUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("need-sponsorship");
   
@@ -75,12 +80,23 @@ const SponsorshipForms = () => {
 
   const handleClientSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!isSignedIn) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to submit your sponsorship request.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setIsSubmitting(true);
     
     try {
+      const userEmail = user?.primaryEmailAddress?.emailAddress || clientForm.email;
+      
       const { error } = await supabase.from('client_requests').insert({
         name: clientForm.name,
-        email: clientForm.email,
+        email: userEmail,
         phone: clientForm.phone || null,
         project_name: clientForm.project_name,
         category: clientForm.category,
@@ -122,13 +138,24 @@ const SponsorshipForms = () => {
 
   const handleCompanySubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!isSignedIn) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to submit your sponsorship offer.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setIsSubmitting(true);
     
     try {
+      const userEmail = user?.primaryEmailAddress?.emailAddress || companyForm.email;
+      
       const { error } = await supabase.from('company_offers').insert({
         company_name: companyForm.company_name,
         contact_person: companyForm.contact_person,
-        email: companyForm.email,
+        email: userEmail,
         phone: companyForm.phone || null,
         industry: companyForm.industry,
         budget: parseFloat(companyForm.budget),
@@ -172,6 +199,76 @@ const SponsorshipForms = () => {
   const handleTabChange = (value: string) => {
     setActiveTab(value);
   };
+
+  if (!isSignedIn) {
+    return (
+      <section id="sponsorship-forms" className="py-20 md:py-32 relative">
+        <div className="absolute inset-0 -z-10 overflow-hidden">
+          <div className="absolute bottom-1/4 left-0 w-1/3 h-1/3 bg-gradient-to-tr from-primary/20 to-purple-300/20 dark:from-primary/10 dark:to-purple-700/10 rounded-full blur-3xl opacity-60"></div>
+        </div>
+
+        <div className="container px-4 md:px-6">
+          <div className="text-center mb-16">
+            <motion.h2 
+              className="text-3xl md:text-4xl font-bold mb-4"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+            >
+              <span className="text-gradient">Sponsorship</span> Forms
+            </motion.h2>
+            <motion.p 
+              className="text-lg text-foreground/80 max-w-2xl mx-auto"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+            >
+              Whether you need sponsorship or want to sponsor, we've got you covered.
+            </motion.p>
+          </div>
+
+          <motion.div
+            className="max-w-xl mx-auto"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <Card className="glass-card border-0">
+              <CardHeader className="text-center">
+                <CardTitle>Authentication Required</CardTitle>
+                <CardDescription>
+                  Please sign in to access the sponsorship forms
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6 py-4">
+                <Alert variant="default">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Access restricted</AlertTitle>
+                  <AlertDescription>
+                    To submit sponsorship requests or offers, you need to be signed in. This helps us verify your identity and communicate with you efficiently.
+                  </AlertDescription>
+                </Alert>
+                <div className="flex flex-col items-center justify-center py-6">
+                  <Button asChild size="lg" className="group relative overflow-hidden">
+                    <Link to="/sign-in">
+                      <LogIn className="mr-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                      Sign In to Continue
+                    </Link>
+                  </Button>
+                  <p className="mt-3 text-sm text-muted-foreground">
+                    Don't have an account? <Link to="/sign-up" className="text-primary hover:underline">Sign up</Link>
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section id="sponsorship-forms" className="py-20 md:py-32 relative">
@@ -261,9 +358,13 @@ const SponsorshipForms = () => {
                           type="email" 
                           placeholder="john@example.com" 
                           required 
-                          value={clientForm.email}
+                          value={clientForm.email || user?.primaryEmailAddress?.emailAddress || ''}
                           onChange={handleClientFormChange}
+                          disabled={!!user?.primaryEmailAddress}
                         />
+                        {user?.primaryEmailAddress && (
+                          <p className="text-xs text-muted-foreground mt-1">Using your account email</p>
+                        )}
                       </div>
                     </div>
                     
@@ -301,6 +402,7 @@ const SponsorshipForms = () => {
                             <SelectValue placeholder="Select category" />
                           </SelectTrigger>
                           <SelectContent>
+                            <SelectItem value="all">All Categories</SelectItem>
                             <SelectItem value="Technology">Technology</SelectItem>
                             <SelectItem value="Arts & Culture">Arts & Culture</SelectItem>
                             <SelectItem value="Sports">Sports</SelectItem>
@@ -406,9 +508,13 @@ const SponsorshipForms = () => {
                           type="email" 
                           placeholder="jane@acmecorp.com" 
                           required 
-                          value={companyForm.email}
+                          value={companyForm.email || user?.primaryEmailAddress?.emailAddress || ''}
                           onChange={handleCompanyFormChange}
+                          disabled={!!user?.primaryEmailAddress}
                         />
+                        {user?.primaryEmailAddress && (
+                          <p className="text-xs text-muted-foreground mt-1">Using your account email</p>
+                        )}
                       </div>
                       <div className="space-y-2 text-left">
                         <Label htmlFor="sponsor-phone">Phone (Optional)</Label>
@@ -433,6 +539,7 @@ const SponsorshipForms = () => {
                             <SelectValue placeholder="Select industry" />
                           </SelectTrigger>
                           <SelectContent>
+                            <SelectItem value="all">All Industries</SelectItem>
                             <SelectItem value="Technology">Technology</SelectItem>
                             <SelectItem value="Finance">Finance</SelectItem>
                             <SelectItem value="Healthcare">Healthcare</SelectItem>
@@ -466,6 +573,7 @@ const SponsorshipForms = () => {
                           <SelectValue placeholder="What type of projects interest you?" />
                         </SelectTrigger>
                         <SelectContent>
+                          <SelectItem value="all">All Types</SelectItem>
                           <SelectItem value="Technology Events">Technology Events</SelectItem>
                           <SelectItem value="Arts & Culture">Arts & Culture</SelectItem>
                           <SelectItem value="Sports">Sports</SelectItem>

@@ -1,1078 +1,514 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-} from 'recharts';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/components/ui/use-toast';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { 
+
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+import { useToast } from "@/components/ui/use-toast";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
-  TableRow
-} from '@/components/ui/table';
-import { 
-  Users, 
-  TrendingUp, 
-  PieChart as PieChartIcon,
-  LogOut,
-  User,
-  Eye,
-  Clock,
-  CheckCircle,
-  XCircle,
-  CalendarDays,
-  Calendar,
-  DollarSign
-} from 'lucide-react';
-import { Checkbox } from '@/components/ui/checkbox';
-import { supabase } from '@/integrations/supabase/client';
-import { useClerk } from '@clerk/clerk-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Slider } from '@/components/ui/slider';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { subDays, isAfter, startOfDay } from 'date-fns';
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Pagination, PaginationContent, PaginationItem, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { useUser } from "@clerk/clerk-react";
+import { supabase } from "@/integrations/supabase/client";
 
-type ClientRequest = {
+// Define types for our form data
+interface ClientRequest {
   id: string;
   name: string;
   email: string;
-  phone: string | null;
   project_name: string;
   category: string;
   amount: number;
-  description: string;
-  benefits: string;
   status: string;
   created_at: string;
-};
+}
 
-type CompanyOffer = {
+interface CompanyOffer {
   id: string;
   company_name: string;
   contact_person: string;
   email: string;
-  phone: string | null;
   industry: string;
   budget: number;
-  interests: string;
-  requirements: string;
-  additional_info: string | null;
   status: string;
   created_at: string;
-};
+}
 
-type DashboardStats = {
+interface StatsData {
   total_users: number;
   active_sponsors: number;
   completed_sponsorships: number;
-};
-
-const ViewDetailsDialog = ({ 
-  isOpen, 
-  onClose, 
-  data, 
-  type 
-}: { 
-  isOpen: boolean; 
-  onClose: () => void; 
-  data: ClientRequest | CompanyOffer | null;
-  type: 'client' | 'company';
-}) => {
-  if (!data) return null;
-
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="mb-2">
-            {type === 'client' 
-              ? `Project: ${(data as ClientRequest).project_name}`
-              : `Company: ${(data as CompanyOffer).company_name}`
-            }
-          </DialogTitle>
-          <DialogDescription>
-            <Badge className="mb-4" variant={data.status === 'completed' ? 'default' : data.status === 'pending' ? 'outline' : 'destructive'}>
-              {data.status.charAt(0).toUpperCase() + data.status.slice(1)}
-            </Badge>
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          {type === 'client' ? (
-            <>
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base">Contact Information</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <p><span className="font-medium">Name:</span> {(data as ClientRequest).name}</p>
-                    <p><span className="font-medium">Email:</span> {(data as ClientRequest).email}</p>
-                    <p><span className="font-medium">Phone:</span> {(data as ClientRequest).phone || 'Not provided'}</p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base">Project Details</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <p><span className="font-medium">Category:</span> {(data as ClientRequest).category}</p>
-                    <p><span className="font-medium">Amount Needed:</span> ${(data as ClientRequest).amount.toLocaleString()}</p>
-                    <p><span className="font-medium">Submitted:</span> {new Date((data as ClientRequest).created_at).toLocaleDateString()}</p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="md:col-span-2">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base">Project Description</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="whitespace-pre-wrap">{(data as ClientRequest).description}</p>
-                </CardContent>
-              </Card>
-
-              <Card className="md:col-span-2">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base">Sponsorship Benefits</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="whitespace-pre-wrap">{(data as ClientRequest).benefits}</p>
-                </CardContent>
-              </Card>
-            </>
-          ) : (
-            <>
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base">Company Information</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <p><span className="font-medium">Contact Person:</span> {(data as CompanyOffer).contact_person}</p>
-                    <p><span className="font-medium">Email:</span> {(data as CompanyOffer).email}</p>
-                    <p><span className="font-medium">Phone:</span> {(data as CompanyOffer).phone || 'Not provided'}</p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base">Sponsorship Details</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <p><span className="font-medium">Industry:</span> {(data as CompanyOffer).industry}</p>
-                    <p><span className="font-medium">Budget:</span> ${(data as CompanyOffer).budget.toLocaleString()}</p>
-                    <p><span className="font-medium">Interests:</span> {(data as CompanyOffer).interests}</p>
-                    <p><span className="font-medium">Submitted:</span> {new Date((data as CompanyOffer).created_at).toLocaleDateString()}</p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="md:col-span-2">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base">Requirements</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="whitespace-pre-wrap">{(data as CompanyOffer).requirements}</p>
-                </CardContent>
-              </Card>
-
-              {(data as CompanyOffer).additional_info && (
-                <Card className="md:col-span-2">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base">Additional Information</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="whitespace-pre-wrap">{(data as CompanyOffer).additional_info}</p>
-                  </CardContent>
-                </Card>
-              )}
-            </>
-          )}
-        </div>
-
-        <div className="flex justify-end space-x-2">
-          <Button variant="outline" onClick={onClose}>Close</Button>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-};
+}
 
 const Dashboard = () => {
-  const { toast } = useToast();
+  const { user } = useUser();
   const navigate = useNavigate();
-  const { client: clerkClient } = useClerk();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<ClientRequest | CompanyOffer | null>(null);
-  const [detailsType, setDetailsType] = useState<'client' | 'company'>('client');
-  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-  
-  const [clientForms, setClientForms] = useState<ClientRequest[]>([]);
-  const [companyForms, setCompanyForms] = useState<CompanyOffer[]>([]);
-  const [stats, setStats] = useState<DashboardStats>({
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(true);
+  const [statsData, setStatsData] = useState<StatsData>({
     total_users: 0,
     active_sponsors: 0,
     completed_sponsorships: 0
   });
-  const [loading, setLoading] = useState(true);
-  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
-  
-  const [dateFilter, setDateFilter] = useState<string>('all');
-  const [costRange, setCostRange] = useState<[number]>([10000]);
-  
-  const [filteredClientForms, setFilteredClientForms] = useState<ClientRequest[]>([]);
-  const [filteredCompanyForms, setFilteredCompanyForms] = useState<CompanyOffer[]>([]);
+  const [clientRequests, setClientRequests] = useState<ClientRequest[]>([]);
+  const [companyOffers, setCompanyOffers] = useState<CompanyOffer[]>([]);
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
-  const [performanceData, setPerformanceData] = useState([
-    { name: 'Jan', value: 0 },
-    { name: 'Feb', value: 0 },
-    { name: 'Mar', value: 0 },
-    { name: 'Apr', value: 0 },
-    { name: 'May', value: 0 },
-    { name: 'Jun', value: 0 },
-  ]);
-
-  const [pieData, setPieData] = useState([
-    { name: 'Tech', value: 0 },
-    { name: 'Sports', value: 0 },
-    { name: 'Education', value: 0 },
-    { name: 'Arts', value: 0 },
-    { name: 'Other', value: 0 },
-  ]);
-
-  const COLORS = ['#8b5cf6', '#6366f1', '#3b82f6', '#0ea5e9', '#14b8a6'];
+  // Filter for search and filters
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
-    const adminAuth = sessionStorage.getItem('adminAuth');
-    if (adminAuth !== 'true') {
-      toast({
-        title: "Unauthorized access",
-        description: "Please login to access the dashboard",
-        variant: "destructive",
-      });
-      navigate('/admin');
-    } else {
-      setIsAuthenticated(true);
-      fetchData();
-      fetchClerkUserCount();
-      setupRealtimeSubscription();
-    }
-  }, [navigate, toast]);
-
-  const fetchClerkUserCount = async () => {
-    try {
-      const userCount = await clerkClient.users.getCount();
-      setStats(prevStats => ({
-        ...prevStats,
-        total_users: userCount.total
-      }));
-    } catch (error) {
-      console.error('Error fetching Clerk user count:', error);
-    }
-  };
+    fetchData();
+  }, []);
 
   const fetchData = async () => {
-    setLoading(true);
+    setIsLoading(true);
     try {
-      const { data: clientData, error: clientError } = await supabase
-        .from('client_requests')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (clientError) throw clientError;
-      setClientForms(clientData || []);
-      
-      const { data: companyData, error: companyError } = await supabase
-        .from('company_offers')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (companyError) throw companyError;
-      setCompanyForms(companyData || []);
-      
+      // Fetch dashboard statistics
       const { data: statsData, error: statsError } = await supabase
         .from('dashboard_stats')
         .select('*')
         .single();
-      
-      if (statsError && statsError.code !== 'PGRST116') {
-        throw statsError;
+
+      if (statsError) {
+        console.error('Error fetching stats:', statsError);
+      } else {
+        setStatsData(statsData as StatsData);
       }
-      
-      if (statsData) {
-        setStats(prevStats => ({
-          ...prevStats,
-          active_sponsors: statsData.active_sponsors,
-          completed_sponsorships: statsData.completed_sponsorships
-        }));
+
+      // Fetch client requests
+      const { data: clientData, error: clientError } = await supabase
+        .from('client_requests')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (clientError) {
+        console.error('Error fetching client requests:', clientError);
+      } else {
+        setClientRequests(clientData as ClientRequest[]);
       }
-      
-      updateChartData(clientData || []);
-      
+
+      // Fetch company offers
+      const { data: companyData, error: companyError } = await supabase
+        .from('company_offers')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (companyError) {
+        console.error('Error fetching company offers:', companyError);
+      } else {
+        setCompanyOffers(companyData as CompanyOffer[]);
+      }
     } catch (error) {
       console.error('Error fetching data:', error);
       toast({
-        title: "Data loading error",
-        description: "Failed to load dashboard data",
+        title: "Error",
+        description: "Failed to load dashboard data.",
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  const setupRealtimeSubscription = () => {
-    const clientChannel = supabase
-      .channel('clients-changes')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'client_requests'
-      }, () => {
-        fetchData();
-      })
-      .subscribe();
-      
-    const companyChannel = supabase
-      .channel('companies-changes')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'company_offers'
-      }, () => {
-        fetchData();
-      })
-      .subscribe();
-      
-    return () => {
-      supabase.removeChannel(clientChannel);
-      supabase.removeChannel(companyChannel);
-    };
-  };
-
-  const updateChartData = (clientData: ClientRequest[]) => {
-    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const currentYear = new Date().getFullYear();
-    
-    const monthlyCounts = Array(12).fill(0);
-    clientData.forEach(request => {
-      const date = new Date(request.created_at);
-      if (date.getFullYear() === currentYear) {
-        monthlyCounts[date.getMonth()]++;
-      }
-    });
-    
-    const performanceData = monthNames.map((name, index) => ({
-      name,
-      value: monthlyCounts[index]
-    })).slice(0, 6);
-    
-    setPerformanceData(performanceData);
-    
-    const categoryMap: Record<string, number> = {
-      'Technology': 0,
-      'Sports': 0,
-      'Education': 0,
-      'Arts & Culture': 0,
-      'Other': 0
-    };
-    
-    clientData.forEach(request => {
-      const category = request.category;
-      if (category === 'Technology') {
-        categoryMap['Technology']++;
-      } else if (category === 'Sports') {
-        categoryMap['Sports']++;
-      } else if (category === 'Education') {
-        categoryMap['Education']++;
-      } else if (category === 'Arts & Culture') {
-        categoryMap['Arts']++;
-      } else {
-        categoryMap['Other']++;
-      }
-    });
-    
-    const pieData = [
-      { name: 'Tech', value: categoryMap['Technology'] || 0 },
-      { name: 'Sports', value: categoryMap['Sports'] || 0 },
-      { name: 'Education', value: categoryMap['Education'] || 0 },
-      { name: 'Arts', value: categoryMap['Arts'] || 0 },
-      { name: 'Other', value: categoryMap['Other'] || 0 }
-    ];
-    
-    setPieData(pieData);
-  };
-
-  useEffect(() => {
-    let filtered = [...clientForms];
-    
-    if (dateFilter !== 'all') {
-      const today = startOfDay(new Date());
-      let cutoffDate: Date;
-      
-      switch (dateFilter) {
-        case 'today':
-          cutoffDate = today;
-          break;
-        case 'week':
-          cutoffDate = subDays(today, 7);
-          break;
-        case 'month':
-          cutoffDate = subDays(today, 30);
-          break;
-        case 'year':
-          cutoffDate = subDays(today, 365);
-          break;
-        default:
-          cutoffDate = new Date(0); // All time
-      }
-      
-      filtered = filtered.filter(form => 
-        isAfter(new Date(form.created_at), cutoffDate)
-      );
-    }
-    
-    filtered = filtered.filter(form => form.amount <= costRange[0]);
-    
-    if (categoryFilter) {
-      filtered = filtered.filter(form => form.category === categoryFilter);
-    }
-    
-    setFilteredClientForms(filtered);
-  }, [clientForms, dateFilter, costRange, categoryFilter]);
-  
-  useEffect(() => {
-    let filtered = [...companyForms];
-    
-    if (dateFilter !== 'all') {
-      const today = startOfDay(new Date());
-      let cutoffDate: Date;
-      
-      switch (dateFilter) {
-        case 'today':
-          cutoffDate = today;
-          break;
-        case 'week':
-          cutoffDate = subDays(today, 7);
-          break;
-        case 'month':
-          cutoffDate = subDays(today, 30);
-          break;
-        case 'year':
-          cutoffDate = subDays(today, 365);
-          break;
-        default:
-          cutoffDate = new Date(0); // All time
-      }
-      
-      filtered = filtered.filter(form => 
-        isAfter(new Date(form.created_at), cutoffDate)
-      );
-    }
-    
-    filtered = filtered.filter(form => form.budget <= costRange[0]);
-    
-    if (categoryFilter) {
-      filtered = filtered.filter(form => form.industry === categoryFilter);
-    }
-    
-    setFilteredCompanyForms(filtered);
-  }, [companyForms, dateFilter, costRange, categoryFilter]);
-
-  const handleViewDetails = (item: ClientRequest | CompanyOffer, type: 'client' | 'company') => {
-    setSelectedItem(item);
-    setDetailsType(type);
-    setIsDetailsOpen(true);
-  };
-
-  const handleLogout = () => {
-    sessionStorage.removeItem('adminAuth');
-    toast({
-      title: "Logged out",
-      description: "You have been successfully logged out",
-    });
-    navigate('/admin');
-  };
-
-  const handleStatusChange = async (item: ClientRequest | CompanyOffer, type: 'client' | 'company', completed: boolean) => {
-    const newStatus = completed ? 'completed' : 'pending';
-    const tableName = type === 'client' ? 'client_requests' : 'company_offers';
-    
+  const handleStatusChange = async (id: string, newStatus: string, isClientRequest: boolean) => {
     try {
+      const tableName = isClientRequest ? 'client_requests' : 'company_offers';
       const { error } = await supabase
         .from(tableName)
         .update({ status: newStatus })
-        .eq('id', item.id);
-      
+        .eq('id', id);
+
       if (error) throw error;
-      
-      if (type === 'client') {
-        setClientForms(prev => 
-          prev.map(form => form.id === item.id ? { ...form, status: newStatus } : form)
+
+      toast({
+        title: "Status updated",
+        description: "The request status has been updated successfully.",
+      });
+
+      // Update local state to reflect changes
+      if (isClientRequest) {
+        setClientRequests(prev => 
+          prev.map(item => item.id === id ? { ...item, status: newStatus } : item)
         );
-      } else {
-        setCompanyForms(prev => 
-          prev.map(form => form.id === item.id ? { ...form, status: newStatus } : form)
-        );
-      }
-      
-      if (completed) {
-        const { data: currentStats } = await supabase
-          .from('dashboard_stats')
-          .select('completed_sponsorships')
-          .single();
-          
-        const newCount = (currentStats?.completed_sponsorships || 0) + 1;
         
-        await supabase
-          .from('dashboard_stats')
-          .update({ completed_sponsorships: newCount })
-          .eq('total_users', stats.total_users);
+        // If status changed to completed, increment counter
+        if (newStatus === 'completed') {
+          setStatsData(prev => ({
+            ...prev,
+            completed_sponsorships: (prev.completed_sponsorships || 0) + 1
+          }));
           
-        setStats(prev => ({
-          ...prev,
-          completed_sponsorships: newCount
-        }));
-      } else {
-        if (item.status === 'completed') {
-          const { data: currentStats } = await supabase
-            .from('dashboard_stats')
-            .select('completed_sponsorships')
-            .single();
-            
-          const newCount = Math.max((currentStats?.completed_sponsorships || 0) - 1, 0);
-          
+          // Update stats in database
           await supabase
             .from('dashboard_stats')
-            .update({ completed_sponsorships: newCount })
-            .eq('total_users', stats.total_users);
-            
-          setStats(prev => ({
+            .update({ completed_sponsorships: (statsData.completed_sponsorships || 0) + 1 })
+            .eq('total_users', statsData.total_users); // Using unique field to identify the row
+        }
+      } else {
+        setCompanyOffers(prev => 
+          prev.map(item => item.id === id ? { ...item, status: newStatus } : item)
+        );
+        
+        // If status changed to completed for company offer
+        if (newStatus === 'completed') {
+          setStatsData(prev => ({
             ...prev,
-            completed_sponsorships: newCount
+            completed_sponsorships: (prev.completed_sponsorships || 0) + 1
           }));
+          
+          // Update stats in database
+          await supabase
+            .from('dashboard_stats')
+            .update({ completed_sponsorships: (statsData.completed_sponsorships || 0) + 1 })
+            .eq('total_users', statsData.total_users); // Using unique field to identify the row
         }
       }
-      
-      toast({
-        title: `Status ${completed ? 'completed' : 'marked as pending'}`,
-        description: `The ${type} has been updated successfully.`,
-      });
-      
     } catch (error) {
-      console.error('Error updating status:', error);
+      console.error("Error updating status:", error);
       toast({
         title: "Update failed",
-        description: "Failed to update the status",
+        description: "Failed to update the request status.",
         variant: "destructive",
       });
     }
   };
 
-  if (!isAuthenticated) {
-    return null;
-  }
+  // Filter client requests based on search term, status and category
+  const filteredClientRequests = clientRequests.filter(request => {
+    const matchesSearch = searchTerm === "" || 
+      request.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      request.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      request.project_name.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === "all" || request.status === statusFilter;
+    const matchesCategory = categoryFilter === "all" || request.category === categoryFilter;
+    
+    return matchesSearch && matchesStatus && matchesCategory;
+  });
 
-  const uniqueClientCategories = Array.from(new Set(clientForms.map(form => form.category)));
-  const uniqueCompanyIndustries = Array.from(new Set(companyForms.map(form => form.industry)));
+  // Filter company offers based on search term and status
+  const filteredCompanyOffers = companyOffers.filter(offer => {
+    const matchesSearch = searchTerm === "" || 
+      offer.company_name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      offer.contact_person.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      offer.email.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === "all" || offer.status === statusFilter;
+    const matchesIndustry = categoryFilter === "all" || offer.industry === categoryFilter;
+    
+    return matchesSearch && matchesStatus && matchesIndustry;
+  });
+
+  // Combined filtered items for pagination
+  const filteredItems = [...filteredClientRequests, ...filteredCompanyOffers];
+
+  // Pagination
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredItems.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
+
+  const paginate = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
+  };
+
+  // Calculate total for statistics
+  const totalRequests = clientRequests.length + companyOffers.length;
+  const pendingRequests = [...clientRequests, ...companyOffers].filter(item => item.status === 'pending').length;
+  const completedRequests = [...clientRequests, ...companyOffers].filter(item => item.status === 'completed').length;
+
+  // Find the max amount value for client requests
+  const maxAmount = Math.max(
+    ...clientRequests.map(request => request.amount),
+    ...companyOffers.map(offer => offer.budget)
+  );
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <header className="bg-card shadow-sm border-b border-border">
-        <div className="container px-4 md:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <h1 className="text-2xl font-bold text-primary">Sponofy Admin</h1>
+    <div className="flex flex-col min-h-screen">
+      {/* Header */}
+      <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur">
+        <div className="container flex items-center justify-between h-16 px-4 md:px-6">
+          <div className="flex items-center gap-2">
+            <a href="/" className="flex items-center space-x-2 text-xl font-bold">
+              <span>Sponofy Admin</span>
+            </a>
           </div>
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                <User className="h-4 w-4 text-primary" />
-              </div>
-              <span className="font-medium">Admin</span>
-            </div>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={handleLogout}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              Logout
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="outline" onClick={() => navigate("/")}>
+              Back to Site
             </Button>
+            {user && (
+              <div className="ml-4 flex items-center gap-2">
+                <div className="text-sm">
+                  <span className="font-semibold">{user.fullName || user.username}</span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </header>
 
-      <main className="flex-1 container px-4 md:px-6 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-left">Total Users</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center space-x-4">
-                  <div className="p-2 bg-primary/10 rounded-full">
-                    <Users className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-left">{stats.total_users}</div>
-                    <p className="text-xs text-muted-foreground text-left">From Clerk authentication</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
+      <main className="flex-1">
+        <div className="container px-4 md:px-6 py-6">
+          <div className="flex flex-col gap-8">
+            {/* Admin Dashboard Title */}
+            <div>
+              <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+              <p className="text-muted-foreground">Manage all sponsorship requests and offers</p>
+            </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.1 }}
-          >
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-left">Active Sponsors</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center space-x-4">
-                  <div className="p-2 bg-primary/10 rounded-full">
-                    <TrendingUp className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-left">{stats.active_sponsors}</div>
-                    <p className="text-xs text-muted-foreground text-left">Companies offering sponsorship</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
+            {/* Stats Cards */}
+            <div className="grid gap-4 md:grid-cols-3">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base font-medium">Total Requests</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">{totalRequests}</div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Client Requests: {clientRequests.length}, Company Offers: {companyOffers.length}
+                  </p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base font-medium">Pending Requests</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">{pendingRequests}</div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Awaiting approval or rejection
+                  </p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base font-medium">Completed Sponsorships</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">{statsData?.completed_sponsorships || completedRequests}</div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Successfully matched and fulfilled
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.2 }}
-          >
+            <Separator />
+
+            {/* Filter Controls */}
+            <div className="grid gap-4 md:grid-cols-3">
+              <div>
+                <Label htmlFor="search">Search</Label>
+                <Input
+                  id="search"
+                  placeholder="Search by name, email..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label htmlFor="status">Status</Label>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger id="status" className="mt-1">
+                    <SelectValue placeholder="Filter by status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="approved">Approved</SelectItem>
+                    <SelectItem value="rejected">Rejected</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="category">Category / Industry</Label>
+                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                  <SelectTrigger id="category" className="mt-1">
+                    <SelectValue placeholder="Filter by category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Categories</SelectItem>
+                    <SelectItem value="Technology">Technology</SelectItem>
+                    <SelectItem value="Arts & Culture">Arts & Culture</SelectItem>
+                    <SelectItem value="Sports">Sports</SelectItem>
+                    <SelectItem value="Education">Education</SelectItem>
+                    <SelectItem value="Finance">Finance</SelectItem>
+                    <SelectItem value="Healthcare">Healthcare</SelectItem>
+                    <SelectItem value="Retail">Retail</SelectItem>
+                    <SelectItem value="Manufacturing">Manufacturing</SelectItem>
+                    <SelectItem value="Charity">Charity</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Submissions Table */}
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-left">Completed Sponsorships</CardTitle>
+              <CardHeader>
+                <CardTitle>Submissions</CardTitle>
+                <CardDescription>
+                  {filteredItems.length} {filteredItems.length === 1 ? 'entry' : 'entries'} found
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center space-x-4">
-                  <div className="p-2 bg-primary/10 rounded-full">
-                    <PieChartIcon className="h-5 w-5 text-primary" />
+                {isLoading ? (
+                  <div className="flex justify-center items-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
                   </div>
-                  <div>
-                    <div className="text-2xl font-bold text-left">{stats.completed_sponsorships}</div>
-                    <p className="text-xs text-muted-foreground text-left">Successfully matched sponsorships</p>
+                ) : currentItems.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-12">#</TableHead>
+                          <TableHead>Name / Company</TableHead>
+                          <TableHead>Email</TableHead>
+                          <TableHead>Project / Contact</TableHead>
+                          <TableHead>Category / Industry</TableHead>
+                          <TableHead>Amount</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead className="text-right">Action</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {currentItems.map((item, index) => {
+                          // Determine if the item is a client request or company offer
+                          const isClientRequest = 'project_name' in item;
+                          const clientItem = isClientRequest ? item as ClientRequest : null;
+                          const companyItem = !isClientRequest ? item as CompanyOffer : null;
+
+                          return (
+                            <TableRow key={item.id}>
+                              <TableCell>{indexOfFirstItem + index + 1}</TableCell>
+                              <TableCell className="font-medium">
+                                {isClientRequest ? clientItem?.name : companyItem?.company_name}
+                              </TableCell>
+                              <TableCell>{item.email}</TableCell>
+                              <TableCell>
+                                {isClientRequest ? clientItem?.project_name : companyItem?.contact_person}
+                              </TableCell>
+                              <TableCell>
+                                {isClientRequest ? clientItem?.category : companyItem?.industry}
+                              </TableCell>
+                              <TableCell>
+                                ${isClientRequest ? clientItem?.amount.toLocaleString() : companyItem?.budget.toLocaleString()}
+                              </TableCell>
+                              <TableCell>
+                                <span className={`px-2 py-1 rounded-full text-xs capitalize ${
+                                  item.status === 'approved' ? 'bg-green-100 text-green-800' :
+                                  item.status === 'rejected' ? 'bg-red-100 text-red-800' : 
+                                  item.status === 'completed' ? 'bg-blue-100 text-blue-800' :
+                                  'bg-yellow-100 text-yellow-800'
+                                }`}>
+                                  {item.status || 'pending'}
+                                </span>
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <Select 
+                                  defaultValue={item.status || 'pending'}
+                                  onValueChange={(value) => handleStatusChange(
+                                    item.id, 
+                                    value, 
+                                    isClientRequest
+                                  )}
+                                >
+                                  <SelectTrigger className="w-32">
+                                    <SelectValue placeholder="Set status" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="pending">Pending</SelectItem>
+                                    <SelectItem value="approved">Approve</SelectItem>
+                                    <SelectItem value="rejected">Reject</SelectItem>
+                                    <SelectItem value="completed">Complete</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
                   </div>
-                </div>
+                ) : (
+                  <div className="text-center py-12 text-muted-foreground">
+                    No entries match your filters.
+                  </div>
+                )}
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="mt-6">
+                    <Pagination>
+                      <PaginationContent>
+                        <PaginationItem>
+                          <PaginationPrevious 
+                            onClick={() => paginate(Math.max(1, currentPage - 1))}
+                            className="cursor-pointer"
+                            aria-disabled={currentPage === 1}
+                          />
+                        </PaginationItem>
+                        
+                        {[...Array(totalPages)].map((_, i) => (
+                          <PaginationItem key={i}>
+                            <button
+                              className={`h-9 w-9 rounded-md text-sm ${
+                                currentPage === i + 1 
+                                ? "bg-primary text-primary-foreground" 
+                                : "text-foreground hover:bg-muted hover:text-foreground"
+                              }`}
+                              onClick={() => paginate(i + 1)}
+                            >
+                              {i + 1}
+                            </button>
+                          </PaginationItem>
+                        ))}
+                        
+                        <PaginationItem>
+                          <PaginationNext 
+                            onClick={() => paginate(Math.min(totalPages, currentPage + 1))}
+                            className="cursor-pointer"
+                            aria-disabled={currentPage === totalPages}
+                          />
+                        </PaginationItem>
+                      </PaginationContent>
+                    </Pagination>
+                  </div>
+                )}
               </CardContent>
             </Card>
-          </motion.div>
+          </div>
         </div>
-
-        <motion.div
-          className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.3 }}
-        >
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-left">Performance Overview</CardTitle>
-              <CardDescription className="text-left">Monthly sponsorship requests</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-80 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={performanceData}
-                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-left">Sponsorship Categories</CardTitle>
-              <CardDescription className="text-left">Distribution by industry</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-80 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={pieData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="value"
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                    >
-                      {pieData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-        >
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-left">Form Submissions</CardTitle>
-              <CardDescription className="text-left">View and manage sponsorship requests and offers</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Tabs defaultValue="clients">
-                <TabsList className="mb-6">
-                  <TabsTrigger value="clients">Client Requests</TabsTrigger>
-                  <TabsTrigger value="companies">Company Offers</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="clients">
-                  {loading ? (
-                    <div className="text-center py-8">Loading...</div>
-                  ) : clientForms.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">No client requests found</div>
-                  ) : (
-                    <div className="overflow-x-auto">
-                      <div className="flex flex-wrap gap-4 mb-6">
-                        <div className="w-full flex flex-wrap gap-4 p-4 bg-muted/30 rounded-lg">
-                          <div className="space-y-2">
-                            <p className="text-sm font-medium">Category</p>
-                            <Select 
-                              value={categoryFilter || 'all'} 
-                              onValueChange={(value) => setCategoryFilter(value === 'all' ? null : value)}
-                            >
-                              <SelectTrigger className="w-[200px]">
-                                <SelectValue placeholder="All Categories" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="all">All Categories</SelectItem>
-                                {uniqueClientCategories.map(category => (
-                                  <SelectItem key={category} value={category}>{category}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          
-                          <div className="space-y-2">
-                            <p className="text-sm font-medium">Date Range</p>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="outline" className="w-[200px] justify-start flex">
-                                  <CalendarDays className="mr-2 h-4 w-4" />
-                                  {dateFilter === 'all' && 'All Time'}
-                                  {dateFilter === 'today' && 'Today'}
-                                  {dateFilter === 'week' && 'This Week'}
-                                  {dateFilter === 'month' && 'This Month'}
-                                  {dateFilter === 'year' && 'This Year'}
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent className="w-[200px]">
-                                <DropdownMenuItem onClick={() => setDateFilter('all')}>
-                                  All Time
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setDateFilter('today')}>
-                                  Today
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setDateFilter('week')}>
-                                  This Week
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setDateFilter('month')}>
-                                  This Month
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setDateFilter('year')}>
-                                  This Year
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-                          
-                          <div className="space-y-2 w-full md:w-auto flex-1 min-w-[300px]">
-                            <div className="flex justify-between">
-                              <p className="text-sm font-medium">Budget Amount</p>
-                              <p className="text-sm font-medium">${costRange[0].toLocaleString()}</p>
-                            </div>
-                            <div className="pt-4 pb-2">
-                              <Slider
-                                defaultValue={[10000]}
-                                max={10000}
-                                step={500}
-                                value={costRange}
-                                onValueChange={(value: [number]) => setCostRange(value)}
-                              />
-                            </div>
-                            <div className="flex justify-between text-xs text-muted-foreground">
-                              <span>$0</span>
-                              <span>$10,000</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Name</TableHead>
-                            <TableHead>Contact</TableHead>
-                            <TableHead>Project</TableHead>
-                            <TableHead>Category</TableHead>
-                            <TableHead>Amount</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Date</TableHead>
-                            <TableHead>Actions</TableHead>
-                            <TableHead className="text-center">Completed</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {filteredClientForms.map((form) => (
-                            <TableRow key={form.id} className="hover:bg-muted/50">
-                              <TableCell className="font-medium">{form.name}</TableCell>
-                              <TableCell>
-                                <div className="max-w-[180px] truncate">
-                                  <div>{form.email}</div>
-                                  {form.phone && <div className="text-sm text-muted-foreground">{form.phone}</div>}
-                                </div>
-                              </TableCell>
-                              <TableCell className="max-w-[150px] truncate">{form.project_name}</TableCell>
-                              <TableCell>{form.category}</TableCell>
-                              <TableCell>${form.amount.toLocaleString()}</TableCell>
-                              <TableCell>
-                                <Badge variant={form.status === 'completed' ? 'default' : form.status === 'pending' ? 'outline' : 'destructive'}>
-                                  {form.status.charAt(0).toUpperCase() + form.status.slice(1)}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>{new Date(form.created_at).toLocaleDateString()}</TableCell>
-                              <TableCell>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm" 
-                                  onClick={() => handleViewDetails(form, 'client')}
-                                  className="h-8 w-8 p-0"
-                                >
-                                  <Eye className="h-4 w-4" />
-                                  <span className="sr-only">View details</span>
-                                </Button>
-                              </TableCell>
-                              <TableCell className="text-center">
-                                <Checkbox 
-                                  id={`complete-client-${form.id}`}
-                                  checked={form.status === 'completed'}
-                                  onCheckedChange={(checked) => {
-                                    handleStatusChange(form, 'client', checked === true);
-                                  }}
-                                />
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  )}
-                </TabsContent>
-                
-                <TabsContent value="companies">
-                  {loading ? (
-                    <div className="text-center py-8">Loading...</div>
-                  ) : companyForms.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">No company offers found</div>
-                  ) : (
-                    <div className="overflow-x-auto">
-                      <div className="flex flex-wrap gap-4 mb-6">
-                        <div className="w-full flex flex-wrap gap-4 p-4 bg-muted/30 rounded-lg">
-                          <div className="space-y-2">
-                            <p className="text-sm font-medium">Industry</p>
-                            <Select 
-                              value={categoryFilter || 'all'} 
-                              onValueChange={(value) => setCategoryFilter(value === 'all' ? null : value)}
-                            >
-                              <SelectTrigger className="w-[200px]">
-                                <SelectValue placeholder="All Industries" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="all">All Industries</SelectItem>
-                                {uniqueCompanyIndustries.map(industry => (
-                                  <SelectItem key={industry} value={industry}>{industry}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          
-                          <div className="space-y-2">
-                            <p className="text-sm font-medium">Date Range</p>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="outline" className="w-[200px] justify-start flex">
-                                  <CalendarDays className="mr-2 h-4 w-4" />
-                                  {dateFilter === 'all' && 'All Time'}
-                                  {dateFilter === 'today' && 'Today'}
-                                  {dateFilter === 'week' && 'This Week'}
-                                  {dateFilter === 'month' && 'This Month'}
-                                  {dateFilter === 'year' && 'This Year'}
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent className="w-[200px]">
-                                <DropdownMenuItem onClick={() => setDateFilter('all')}>
-                                  All Time
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setDateFilter('today')}>
-                                  Today
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setDateFilter('week')}>
-                                  This Week
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setDateFilter('month')}>
-                                  This Month
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setDateFilter('year')}>
-                                  This Year
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-                          
-                          <div className="space-y-2 w-full md:w-auto flex-1 min-w-[300px]">
-                            <div className="flex justify-between">
-                              <p className="text-sm font-medium">Budget Amount</p>
-                              <p className="text-sm font-medium">${costRange[0].toLocaleString()}</p>
-                            </div>
-                            <div className="pt-4 pb-2">
-                              <Slider
-                                defaultValue={[10000]}
-                                max={10000}
-                                step={500}
-                                value={costRange}
-                                onValueChange={(value: [number]) => setCostRange(value)}
-                              />
-                            </div>
-                            <div className="flex justify-between text-xs text-muted-foreground">
-                              <span>$0</span>
-                              <span>$10,000</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Company</TableHead>
-                            <TableHead>Contact</TableHead>
-                            <TableHead>Industry</TableHead>
-                            <TableHead>Budget</TableHead>
-                            <TableHead>Interests</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Date</TableHead>
-                            <TableHead>Actions</TableHead>
-                            <TableHead className="text-center">Completed</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {filteredCompanyForms.map((form) => (
-                            <TableRow key={form.id} className="hover:bg-muted/50">
-                              <TableCell className="font-medium">{form.company_name}</TableCell>
-                              <TableCell>
-                                <div className="max-w-[180px] truncate">
-                                  <div>{form.contact_person}</div>
-                                  <div className="text-sm text-muted-foreground">{form.email}</div>
-                                  {form.phone && <div className="text-sm text-muted-foreground">{form.phone}</div>}
-                                </div>
-                              </TableCell>
-                              <TableCell>{form.industry}</TableCell>
-                              <TableCell>${form.budget.toLocaleString()}</TableCell>
-                              <TableCell className="max-w-[150px] truncate">{form.interests}</TableCell>
-                              <TableCell>
-                                <Badge variant={form.status === 'completed' ? 'default' : form.status === 'pending' ? 'outline' : 'destructive'}>
-                                  {form.status.charAt(0).toUpperCase() + form.status.slice(1)}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>{new Date(form.created_at).toLocaleDateString()}</TableCell>
-                              <TableCell>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm" 
-                                  onClick={() => handleViewDetails(form, 'company')}
-                                  className="h-8 w-8 p-0"
-                                >
-                                  <Eye className="h-4 w-4" />
-                                  <span className="sr-only">View details</span>
-                                </Button>
-                              </TableCell>
-                              <TableCell className="text-center">
-                                <Checkbox 
-                                  id={`complete-company-${form.id}`}
-                                  checked={form.status === 'completed'}
-                                  onCheckedChange={(checked) => {
-                                    handleStatusChange(form, 'company', checked === true);
-                                  }}
-                                />
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  )}
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
-        </motion.div>
       </main>
-
-      <ViewDetailsDialog 
-        isOpen={isDetailsOpen} 
-        onClose={() => setIsDetailsOpen(false)} 
-        data={selectedItem} 
-        type={detailsType}
-      />
     </div>
   );
 };

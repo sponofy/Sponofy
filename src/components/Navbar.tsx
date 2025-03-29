@@ -134,7 +134,7 @@ const Navbar = ({ openChatbot }: NavbarProps) => {
                 >
                   <Button
                     className="bg-primary hover:bg-primary/90 text-white rounded-full group relative overflow-hidden"
-                    onClick={() => handleOpenAuthDialog("signIn")}
+                    onClick={() => navigate("/sign-in")}
                   >
                     <span className="relative z-10 flex items-center">
                       <LogIn className="mr-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
@@ -234,7 +234,7 @@ const Navbar = ({ openChatbot }: NavbarProps) => {
                   <SignedOut>
                     <Button
                       className="mt-6 w-full max-w-xs bg-primary hover:bg-primary/90 text-white rounded-full"
-                      onClick={() => handleOpenAuthDialog("signIn")}
+                      onClick={() => navigate("/sign-in")}
                     >
                       <LogIn className="mr-2 h-5 w-5" />
                       Become a Member

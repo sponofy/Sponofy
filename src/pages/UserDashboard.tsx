@@ -14,11 +14,20 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Handshake, Users, Bell, Settings, LogOut } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 const UserDashboard = () => {
   const { user, isLoaded } = useUser();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
+  const [userStats, setUserStats] = useState({
+    clientRequests: 0,
+    companyOffers: 0,
+    pendingRequests: 0,
+    completedRequests: 0
+  });
+  const { toast } = useToast();
 
   useEffect(() => {
     // Set page title
@@ -26,7 +35,56 @@ const UserDashboard = () => {
     
     // Scroll to top on load
     window.scrollTo(0, 0);
-  }, []);
+
+    // Fetch user stats
+    if (user?.primaryEmailAddress) {
+      fetchUserStats();
+    }
+  }, [user]);
+
+  const fetchUserStats = async () => {
+    try {
+      if (!user?.primaryEmailAddress) return;
+      
+      const email = user.primaryEmailAddress.emailAddress;
+      
+      // Fetch client requests count
+      const { data: clientRequests, error: clientError } = await supabase
+        .from('client_requests')
+        .select('id, status')
+        .eq('email', email);
+      
+      // Fetch company offers count  
+      const { data: companyOffers, error: companyError } = await supabase
+        .from('company_offers')
+        .select('id, status')
+        .eq('email', email);
+      
+      if (clientError) throw clientError;
+      if (companyError) throw companyError;
+      
+      const pendingRequests = [...(clientRequests || []), ...(companyOffers || [])]
+        .filter(item => item.status === 'pending').length;
+      
+      const completedRequests = [...(clientRequests || []), ...(companyOffers || [])]
+        .filter(item => item.status === 'completed').length;
+      
+      setUserStats({
+        clientRequests: clientRequests?.length || 0,
+        companyOffers: companyOffers?.length || 0,
+        pendingRequests,
+        completedRequests
+      });
+      
+    } catch (error) {
+      console.error("Error fetching user stats:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load your statistics. Please try again later.",
+        variant: "destructive"
+      });
+    }
+  };
 
   if (!isLoaded) {
     return (
@@ -102,20 +160,32 @@ const UserDashboard = () => {
                 className="flex flex-col gap-6"
               >
                 <div>
-                  <h1 className="text-3xl font-bold tracking-tight">Welcome, {user?.firstName || "User"}</h1>
+                  <h1 className="text-3xl font-bold tracking-tight">Welcome, {user?.firstName || user?.username || "User"}</h1>
                   <p className="text-muted-foreground">Here's what's happening with your sponsorship activities.</p>
                 </div>
 
                 <Tabs defaultValue="overview" className="w-full" value={activeTab} onValueChange={setActiveTab}>
                   <TabsContent value="overview" className="space-y-6">
-                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                       <Card className="hover:shadow-lg transition-all duration-300">
                         <CardHeader className="pb-2">
-                          <CardTitle>Active Connections</CardTitle>
-                          <CardDescription>Your current sponsorship connections</CardDescription>
+                          <CardTitle>Client Requests</CardTitle>
+                          <CardDescription>Your sponsorship requests</CardDescription>
                         </CardHeader>
                         <CardContent className="pb-2">
-                          <div className="text-3xl font-bold">3</div>
+                          <div className="text-3xl font-bold">{userStats.clientRequests}</div>
+                        </CardContent>
+                        <CardFooter>
+                          <Button variant="outline" size="sm" className="w-full">View All</Button>
+                        </CardFooter>
+                      </Card>
+                      <Card className="hover:shadow-lg transition-all duration-300">
+                        <CardHeader className="pb-2">
+                          <CardTitle>Company Offers</CardTitle>
+                          <CardDescription>Your sponsorship offers</CardDescription>
+                        </CardHeader>
+                        <CardContent className="pb-2">
+                          <div className="text-3xl font-bold">{userStats.companyOffers}</div>
                         </CardContent>
                         <CardFooter>
                           <Button variant="outline" size="sm" className="w-full">View All</Button>
@@ -124,10 +194,10 @@ const UserDashboard = () => {
                       <Card className="hover:shadow-lg transition-all duration-300">
                         <CardHeader className="pb-2">
                           <CardTitle>Pending Requests</CardTitle>
-                          <CardDescription>Sponsorship requests awaiting response</CardDescription>
+                          <CardDescription>Awaiting response</CardDescription>
                         </CardHeader>
                         <CardContent className="pb-2">
-                          <div className="text-3xl font-bold">7</div>
+                          <div className="text-3xl font-bold">{userStats.pendingRequests}</div>
                         </CardContent>
                         <CardFooter>
                           <Button variant="outline" size="sm" className="w-full">View All</Button>
@@ -135,11 +205,11 @@ const UserDashboard = () => {
                       </Card>
                       <Card className="hover:shadow-lg transition-all duration-300">
                         <CardHeader className="pb-2">
-                          <CardTitle>Matches This Week</CardTitle>
-                          <CardDescription>New potential sponsorship matches</CardDescription>
+                          <CardTitle>Completed</CardTitle>
+                          <CardDescription>Successfully completed</CardDescription>
                         </CardHeader>
                         <CardContent className="pb-2">
-                          <div className="text-3xl font-bold">12</div>
+                          <div className="text-3xl font-bold">{userStats.completedRequests}</div>
                         </CardContent>
                         <CardFooter>
                           <Button variant="outline" size="sm" className="w-full">View All</Button>
