@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import App from './App.tsx';
@@ -22,28 +22,8 @@ import { Toaster as SonnerToaster } from 'sonner';
 // Create a client for React Query
 const queryClient = new QueryClient();
 
-// Main app with loading state
+// Main app component
 const MainApp = () => {
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    // Simulate initial loading
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 1000); // Show loading for 1 second
-  }, []);
-
-  if (isLoading) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center bg-background z-50">
-        <div className="flex flex-col items-center">
-          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-          <p className="mt-4 text-lg font-medium text-foreground">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
   // Check if publishable key exists
   const publishableKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
   const hasClerkKey = !!publishableKey;

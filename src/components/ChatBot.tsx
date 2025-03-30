@@ -12,10 +12,6 @@ interface Message {
   content: string;
 }
 
-// DeepSeek AI API configuration
-const DEEPSEEK_API_KEY = "sk-3d49d7d6ae754c138070f36223f96ca6";
-const DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions";
-
 const ChatBot = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
@@ -36,7 +32,6 @@ const ChatBot = () => {
     scrollToBottom();
   }, [messages]);
   
-  // Function to open the chat
   const openChat = () => {
     setIsOpen(true);
   };
@@ -52,55 +47,34 @@ const ChatBot = () => {
     setIsLoading(true);
 
     try {
-      // Prepare the messages for DeepSeek API (including conversation history)
-      const apiMessages = messages.map(msg => ({
-        role: msg.role,
-        content: msg.content
-      }));
-      
-      // Add the new user message
-      apiMessages.push({
-        role: "user",
-        content: input
-      });
-
-      const response = await fetch(DEEPSEEK_API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${DEEPSEEK_API_KEY}`
-        },
-        body: JSON.stringify({
-          model: "deepseek-chat", // Using DeepSeek's chat model
-          messages: apiMessages,
-          max_tokens: 800,
-          temperature: 0.7,
-        }),
-      });
-
-      const data = await response.json();
-      
-      if (response.ok && data.choices && data.choices[0]?.message) {
-        const botResponse = data.choices[0].message.content;
+      // Simulate AI response
+      setTimeout(() => {
+        const responses = [
+          "I'm just a demo assistant. In a real app, I would connect to an AI service.",
+          "Thanks for your message! This is a placeholder response.",
+          "I understand your question. This is a demo response.",
+          "In the actual implementation, this would call an AI API."
+        ];
+        
+        const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+        
         setMessages((prev) => [
           ...prev,
-          { role: "assistant", content: botResponse },
+          { role: "assistant", content: randomResponse },
         ]);
-      } else {
-        console.error("DeepSeek API error:", data);
-        throw new Error(data.error?.message || "Error communicating with AI");
-      }
+        setIsLoading(false);
+      }, 1000);
+      
     } catch (error) {
-      console.error("Error calling DeepSeek API:", error);
+      console.error("Error processing message:", error);
       toast.error("Sorry, I couldn't process your request. Please try again.");
       setMessages((prev) => [
         ...prev,
         {
           role: "assistant",
-          content: "I'm having trouble connecting to my brain right now. Please try again in a moment.",
+          content: "I'm having trouble connecting right now. Please try again in a moment.",
         },
       ]);
-    } finally {
       setIsLoading(false);
     }
   };
