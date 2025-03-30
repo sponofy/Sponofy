@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, ChangeEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -44,11 +44,11 @@ import { toast } from "sonner";
 
 // Define types for our data
 interface ClientRequest {
-  id: number;
+  id: string | number; // Accept both string and number for ID compatibility
   created_at: string;
   name: string;
   email: string;
-  phone: string;
+  phone?: string;
   project_name: string;
   category: string;
   amount: number;
@@ -61,10 +61,11 @@ interface ClientRequest {
   social_platform?: string;
   followers_count?: string;
   social_link?: string;
+  updated_at?: string;
 }
 
 interface CompanyOffer {
-  id: number;
+  id: string | number; // Accept both string and number for ID compatibility
   created_at: string;
   company_name: string;
   contact_person: string;
@@ -73,6 +74,10 @@ interface CompanyOffer {
   budget: number;
   interests: string;
   requirements: string;
+  phone?: string;
+  additional_info?: string;
+  status?: string;
+  updated_at?: string;
 }
 
 const Dashboard = () => {
@@ -370,14 +375,16 @@ const Dashboard = () => {
             <TabsContent value="clients" className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex w-full max-w-sm items-center space-x-2">
-                  <Input
-                    placeholder="Search clients..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full"
-                    type="search"
-                    icon={Search}
-                  />
+                  <div className="relative w-full">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search clients..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full pl-8"
+                      type="search"
+                    />
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <Filter className="h-4 w-4" />
@@ -494,14 +501,16 @@ const Dashboard = () => {
             <TabsContent value="companies" className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex w-full max-w-sm items-center space-x-2">
-                  <Input
-                    placeholder="Search companies..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full"
-                    type="search"
-                    icon={Search}
-                  />
+                  <div className="relative w-full">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search companies..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full pl-8"
+                      type="search"
+                    />
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <Filter className="h-4 w-4" />

@@ -44,28 +44,58 @@ const MainApp = () => {
     );
   }
 
-  return (
-    <ClerkProvider publishableKey={import.meta.env.VITE_CLERK_PUBLISHABLE_KEY}>
+  // Check if publishable key exists
+  const publishableKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+  const hasClerkKey = !!publishableKey;
+
+  // Conditional rendering based on Clerk key availability
+  if (hasClerkKey) {
+    return (
+      <ClerkProvider publishableKey={publishableKey}>
+        <QueryClientProvider client={queryClient}>
+          <Router>
+            <Routes>
+              <Route path="/" element={<App />}>
+                <Route index element={<Index />} />
+                <Route path="sign-in/*" element={<SignIn />} />
+                <Route path="sign-up/*" element={<SignUp />} />
+                <Route path="dashboard" element={<UserDashboard />} />
+                <Route path="admin-login" element={<AdminLogin />} />
+                <Route path="admin" element={<Admin />} />
+                <Route path="admin/dashboard" element={<Dashboard />} />
+                <Route path="*" element={<NotFound />} />
+              </Route>
+            </Routes>
+          </Router>
+          <SonnerToaster position="top-right" />
+          <Toaster />
+        </QueryClientProvider>
+      </ClerkProvider>
+    );
+  } else {
+    // Fallback when no Clerk key is available - bypass authentication features
+    return (
       <QueryClientProvider client={queryClient}>
         <Router>
           <Routes>
             <Route path="/" element={<App />}>
               <Route index element={<Index />} />
-              <Route path="sign-in/*" element={<SignIn />} />
-              <Route path="sign-up/*" element={<SignUp />} />
-              <Route path="dashboard" element={<UserDashboard />} />
+              {/* Redirect auth-related routes to home when no auth is available */}
+              <Route path="sign-in/*" element={<Navigate to="/" replace />} />
+              <Route path="sign-up/*" element={<Navigate to="/" replace />} />
+              <Route path="dashboard" element={<Navigate to="/" replace />} />
               <Route path="admin-login" element={<AdminLogin />} />
               <Route path="admin" element={<Admin />} />
               <Route path="admin/dashboard" element={<Dashboard />} />
               <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>
+          <SonnerToaster position="top-right" />
+          <Toaster />
         </Router>
-        <SonnerToaster position="top-right" />
-        <Toaster />
       </QueryClientProvider>
-    </ClerkProvider>
-  );
+    );
+  }
 };
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
