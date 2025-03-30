@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -67,7 +66,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-// Define types for our form data
 interface ClientRequest {
   id: string;
   name: string;
@@ -77,7 +75,14 @@ interface ClientRequest {
   amount: number;
   status: string;
   created_at: string;
-  phone: string | null;
+  phone: string;
+  age: number | null;
+  gender: string;
+  language: string;
+  city: string;
+  social_platform: string;
+  followers_count: string;
+  social_link: string;
 }
 
 interface CompanyOffer {
@@ -110,7 +115,6 @@ interface CategoryStats {
   color?: string;
 }
 
-// COLORS for the pie chart
 const COLORS = ['#8884d8', '#83a6ed', '#8dd1e1', '#82ca9d', '#a4de6c', '#d0ed57', '#ffc658'];
 
 const Dashboard = () => {
@@ -129,19 +133,15 @@ const Dashboard = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [dateFilter, setDateFilter] = useState("all");
   
-  // For delete confirmation
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<{id: string, isClient: boolean} | null>(null);
   
-  // For pie chart active sector
   const [activeIndex, setActiveIndex] = useState(0);
   
-  // Separate pagination for client requests and company offers
   const [currentClientPage, setCurrentClientPage] = useState(1);
   const [currentCompanyPage, setCurrentCompanyPage] = useState(1);
   const [itemsPerPage] = useState(10);
   
-  // Chart data
   const [monthlyStats, setMonthlyStats] = useState<MonthlyStats[]>([]);
   const [categoryStats, setCategoryStats] = useState<CategoryStats[]>([]);
 
@@ -152,7 +152,6 @@ const Dashboard = () => {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      // Fetch dashboard statistics
       const { data: statsData, error: statsError } = await supabase
         .from('dashboard_stats')
         .select('*')
@@ -164,7 +163,6 @@ const Dashboard = () => {
         setStatsData(statsData as StatsData);
       }
 
-      // Fetch client requests
       const { data: clientData, error: clientError } = await supabase
         .from('client_requests')
         .select('*')
@@ -175,22 +173,20 @@ const Dashboard = () => {
       } else {
         setClientRequests(clientData as ClientRequest[]);
         
-        // Process category stats for clients
-        const categories = clientData.reduce((acc: Record<string, number>, item: ClientRequest) => {
+        const categoriesObj = clientData.reduce((acc: Record<string, number>, item: ClientRequest) => {
           acc[item.category] = (acc[item.category] || 0) + 1;
           return acc;
         }, {});
         
-        const categoryStatsArray: CategoryStats[] = Object.keys(categories).map((key, index) => ({
+        const categoryStatsArray: CategoryStats[] = Object.keys(categoriesObj).map((key, index) => ({
           name: key,
-          count: categories[key],
+          count: categoriesObj[key],
           color: COLORS[index % COLORS.length]
         }));
         
         setCategoryStats(categoryStatsArray);
       }
 
-      // Fetch company offers
       const { data: companyData, error: companyError } = await supabase
         .from('company_offers')
         .select('*')
@@ -201,28 +197,20 @@ const Dashboard = () => {
       } else {
         setCompanyOffers(companyData as CompanyOffer[]);
         
-        // Add industry stats to category stats
         const industries = companyData.reduce((acc: Record<string, number>, item: CompanyOffer) => {
           acc[item.industry] = (acc[item.industry] || 0) + 1;
           return acc;
         }, {});
         
-        // Fix: Define local categoriesObj to use for length calculation
-        const categoriesObj = clientData?.reduce((acc: Record<string, number>, item: ClientRequest) => {
-          acc[item.category] = (acc[item.category] || 0) + 1;
-          return acc;
-        }, {}) || {};
-        
-        const industryStatsArray: CategoryStats[] = Object.keys(industries).map((key, index) => ({
+        const categoryStatsArray: CategoryStats[] = Object.keys(industries).map((key, index) => ({
           name: key,
           count: industries[key],
           color: COLORS[(index + Object.keys(categoriesObj).length) % COLORS.length]
         }));
         
-        setCategoryStats(prev => [...prev, ...industryStatsArray]);
+        setCategoryStats(prev => [...prev, ...categoryStatsArray]);
       }
       
-      // Generate monthly stats for the past 6 months
       generateMonthlyStats(clientData || [], companyData || []);
       
     } catch (error) {
@@ -238,7 +226,6 @@ const Dashboard = () => {
   };
   
   const generateMonthlyStats = (clientData: ClientRequest[], companyData: CompanyOffer[]) => {
-    // Get the past 6 months
     const months = [];
     const today = new Date();
     for (let i = 5; i >= 0; i--) {
@@ -249,7 +236,6 @@ const Dashboard = () => {
       });
     }
     
-    // Count submissions for each month
     const monthlyData = months.map(monthObj => {
       const month = monthObj.date;
       const nextMonth = new Date(month.getFullYear(), month.getMonth() + 1, 1);
@@ -289,13 +275,11 @@ const Dashboard = () => {
         description: "The request status has been updated successfully.",
       });
 
-      // Update local state to reflect changes
       if (isClientRequest) {
         setClientRequests(prev => 
           prev.map(item => item.id === id ? { ...item, status: newStatus } : item)
         );
         
-        // If status changed to completed, update the stats
         if (newStatus === 'completed') {
           const updatedStats = {
             ...statsData,
@@ -304,21 +288,18 @@ const Dashboard = () => {
           
           setStatsData(updatedStats);
           
-          // Update stats in database using as any to bypass type checking
-          // This is a workaround for the current issue
           await supabase
             .from('dashboard_stats')
             .update({
               completed_sponsorships: updatedStats.completed_sponsorships
             } as any)
-            .eq('total_users', statsData.total_users); // Using unique field to identify the row
+            .eq('total_users', statsData.total_users);
         }
       } else {
         setCompanyOffers(prev => 
           prev.map(item => item.id === id ? { ...item, status: newStatus } : item)
         );
         
-        // If status changed to completed for company offer
         if (newStatus === 'completed') {
           const updatedStats = {
             ...statsData,
@@ -327,13 +308,12 @@ const Dashboard = () => {
           
           setStatsData(updatedStats);
           
-          // Update stats in database using as any to bypass type checking
           await supabase
             .from('dashboard_stats')
             .update({
               completed_sponsorships: updatedStats.completed_sponsorships
             } as any)
-            .eq('total_users', statsData.total_users); // Using unique field to identify the row
+            .eq('total_users', statsData.total_users);
         }
       }
     } catch (error) {
@@ -346,7 +326,7 @@ const Dashboard = () => {
     }
   };
 
-  const handleDelete = (id: string, isClient: boolean) => {
+  const handleDelete = async (id: string, isClient: boolean) => {
     setItemToDelete({ id, isClient });
     setDeleteDialogOpen(true);
   };
@@ -370,14 +350,12 @@ const Dashboard = () => {
         description: "The request has been deleted successfully.",
       });
 
-      // Update local state to remove the deleted item
       if (isClient) {
         setClientRequests(prev => prev.filter(item => item.id !== id));
       } else {
         setCompanyOffers(prev => prev.filter(item => item.id !== id));
       }
       
-      // Reset pagination if needed
       if (isClient && currentClientPage > Math.ceil((clientRequests.length - 1) / itemsPerPage)) {
         setCurrentClientPage(Math.max(1, currentClientPage - 1));
       }
@@ -399,35 +377,28 @@ const Dashboard = () => {
     }
   };
 
-  // Filter requests based on date range
   const filterByDate = (date: string) => {
     const today = new Date();
     const startDate = new Date();
     
     switch(date) {
       case "today":
-        // Today only
         startDate.setHours(0, 0, 0, 0);
         break;
       case "week":
-        // This week (last 7 days)
         startDate.setDate(today.getDate() - 7);
         break;
       case "month":
-        // This month
         startDate.setMonth(today.getMonth() - 1);
         break;
       case "sixMonths":
-        // Past 6 months
         startDate.setMonth(today.getMonth() - 6);
         break;
       case "year":
-        // This year
         startDate.setFullYear(today.getFullYear() - 1);
         break;
       default:
-        // All time (no filtering)
-        return () => true; // Fixed: Return a function that always returns true
+        return () => true;
     }
     
     return (item: ClientRequest | CompanyOffer) => {
@@ -436,7 +407,6 @@ const Dashboard = () => {
     };
   };
 
-  // Custom active shape for pie chart
   const renderActiveShape = (props: any) => {
     const { cx, cy, innerRadius, outerRadius, startAngle, endAngle,
       fill, payload, percent, value } = props;
@@ -474,7 +444,6 @@ const Dashboard = () => {
     );
   };
 
-  // Filter client requests based on search term, status, category and date
   const filteredClientRequests = clientRequests.filter(request => {
     const matchesSearch = searchTerm === "" || 
       request.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -483,14 +452,12 @@ const Dashboard = () => {
     
     const matchesStatus = statusFilter === "all" || request.status === statusFilter;
     const matchesCategory = categoryFilter === "all" || request.category === categoryFilter;
-    // Fixed: Call the function returned by filterByDate
     const dateFilterFn = filterByDate(dateFilter);
     const matchesDate = dateFilter === "all" || dateFilterFn(request);
     
     return matchesSearch && matchesStatus && matchesCategory && matchesDate;
   });
 
-  // Filter company offers based on search term, status, category and date
   const filteredCompanyOffers = companyOffers.filter(offer => {
     const matchesSearch = searchTerm === "" || 
       offer.company_name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -499,33 +466,28 @@ const Dashboard = () => {
     
     const matchesStatus = statusFilter === "all" || offer.status === statusFilter;
     const matchesIndustry = categoryFilter === "all" || offer.industry === categoryFilter;
-    // Fixed: Call the function returned by filterByDate
     const dateFilterFn = filterByDate(dateFilter);
     const matchesDate = dateFilter === "all" || dateFilterFn(offer);
     
     return matchesSearch && matchesStatus && matchesIndustry && matchesDate;
   });
 
-  // Pagination for client requests
   const indexOfLastClient = currentClientPage * itemsPerPage;
   const indexOfFirstClient = indexOfLastClient - itemsPerPage;
   const currentClientItems = filteredClientRequests.slice(indexOfFirstClient, indexOfLastClient);
   const totalClientPages = Math.ceil(filteredClientRequests.length / itemsPerPage);
   
-  // Pagination for company offers
   const indexOfLastCompany = currentCompanyPage * itemsPerPage;
   const indexOfFirstCompany = indexOfLastCompany - itemsPerPage;
   const currentCompanyItems = filteredCompanyOffers.slice(indexOfFirstCompany, indexOfLastCompany);
   const totalCompanyPages = Math.ceil(filteredCompanyOffers.length / itemsPerPage);
 
-  // Calculate total for statistics
   const totalRequests = clientRequests.length + companyOffers.length;
   const pendingRequests = [...clientRequests, ...companyOffers].filter(item => item.status === 'pending').length;
   const completedRequests = [...clientRequests, ...companyOffers].filter(item => item.status === 'completed').length;
 
   return (
     <div className="flex flex-col min-h-screen">
-      {/* Header */}
       <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur">
         <div className="container flex items-center justify-between h-16 px-4 md:px-6">
           <div className="flex items-center gap-2">
@@ -544,13 +506,11 @@ const Dashboard = () => {
       <main className="flex-1">
         <div className="container px-4 md:px-6 py-6">
           <div className="flex flex-col gap-8">
-            {/* Admin Dashboard Title */}
             <div>
               <h1 className="text-3xl font-bold">Admin Dashboard</h1>
               <p className="text-muted-foreground">Manage all sponsorship requests and offers</p>
             </div>
 
-            {/* Stats Cards */}
             <div className="grid gap-4 md:grid-cols-3">
               <Card>
                 <CardHeader className="pb-2">
@@ -587,9 +547,7 @@ const Dashboard = () => {
               </Card>
             </div>
             
-            {/* Charts Section */}
             <div className="grid gap-6 md:grid-cols-2">
-              {/* Monthly Submissions Chart */}
               <Card>
                 <CardHeader>
                   <CardTitle>Submissions - Last 6 Months</CardTitle>
@@ -610,7 +568,6 @@ const Dashboard = () => {
                 </CardContent>
               </Card>
               
-              {/* Category Distribution Pie Chart */}
               <Card>
                 <CardHeader>
                   <CardTitle>Category Distribution</CardTitle>
@@ -644,7 +601,6 @@ const Dashboard = () => {
 
             <Separator />
 
-            {/* Filter Controls */}
             <div className="grid gap-4 md:grid-cols-4">
               <div>
                 <Label htmlFor="search">Search</Label>
@@ -710,7 +666,6 @@ const Dashboard = () => {
               </div>
             </div>
 
-            {/* Tabbed Submissions Tables */}
             <Card>
               <CardHeader>
                 <CardTitle>Submissions</CardTitle>
@@ -725,7 +680,6 @@ const Dashboard = () => {
                     <TabsTrigger value="company">Company Offers ({filteredCompanyOffers.length})</TabsTrigger>
                   </TabsList>
                   
-                  {/* Client Requests Tab */}
                   <TabsContent value="client">
                     {isLoading ? (
                       <div className="flex justify-center items-center py-12">
@@ -736,13 +690,20 @@ const Dashboard = () => {
                         <Table>
                           <TableHeader>
                             <TableRow>
-                              <TableHead className="w-12">#</TableHead>
+                              <TableHead className="w-10">#</TableHead>
                               <TableHead>Name</TableHead>
                               <TableHead>Email</TableHead>
                               <TableHead>Phone</TableHead>
+                              <TableHead>Age</TableHead>
+                              <TableHead>Gender</TableHead>
+                              <TableHead>Language</TableHead>
+                              <TableHead>City</TableHead>
                               <TableHead>Project</TableHead>
                               <TableHead>Category</TableHead>
                               <TableHead>Amount</TableHead>
+                              <TableHead>Platform</TableHead>
+                              <TableHead>Followers</TableHead>
+                              <TableHead>Social Link</TableHead>
                               <TableHead>Status</TableHead>
                               <TableHead className="text-right">Action</TableHead>
                             </TableRow>
@@ -753,19 +714,30 @@ const Dashboard = () => {
                                 <TableCell>{indexOfFirstClient + index + 1}</TableCell>
                                 <TableCell className="font-medium">{item.name}</TableCell>
                                 <TableCell>{item.email}</TableCell>
-                                <TableCell>
-                                  {item.phone ? (
-                                    <div className="flex items-center gap-1">
-                                      <Phone size={14} />
-                                      <span>{item.phone}</span>
-                                    </div>
-                                  ) : (
-                                    <span className="text-muted-foreground text-sm">Not provided</span>
-                                  )}
-                                </TableCell>
+                                <TableCell>{item.phone}</TableCell>
+                                <TableCell>{item.age || "N/A"}</TableCell>
+                                <TableCell className="capitalize">{item.gender || "N/A"}</TableCell>
+                                <TableCell>{item.language || "N/A"}</TableCell>
+                                <TableCell>{item.city || "N/A"}</TableCell>
                                 <TableCell>{item.project_name}</TableCell>
                                 <TableCell>{item.category}</TableCell>
                                 <TableCell>${item.amount.toLocaleString()}</TableCell>
+                                <TableCell>{item.social_platform || "N/A"}</TableCell>
+                                <TableCell>{item.followers_count || "N/A"}</TableCell>
+                                <TableCell>
+                                  {item.social_link ? (
+                                    <a 
+                                      href={item.social_link} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer" 
+                                      className="text-primary hover:underline truncate max-w-[100px] block"
+                                    >
+                                      Link
+                                    </a>
+                                  ) : (
+                                    "N/A"
+                                  )}
+                                </TableCell>
                                 <TableCell>
                                   <span className={`px-2 py-1 rounded-full text-xs capitalize ${
                                     item.status === 'approved' ? 'bg-green-100 text-green-800' :
@@ -806,7 +778,6 @@ const Dashboard = () => {
                           </TableBody>
                         </Table>
                         
-                        {/* Client Pagination */}
                         {totalClientPages > 1 && (
                           <div className="mt-6">
                             <Pagination>
@@ -853,7 +824,6 @@ const Dashboard = () => {
                     )}
                   </TabsContent>
                   
-                  {/* Company Offers Tab */}
                   <TabsContent value="company">
                     {isLoading ? (
                       <div className="flex justify-center items-center py-12">
@@ -934,7 +904,6 @@ const Dashboard = () => {
                           </TableBody>
                         </Table>
                         
-                        {/* Company Pagination */}
                         {totalCompanyPages > 1 && (
                           <div className="mt-6">
                             <Pagination>
@@ -987,7 +956,6 @@ const Dashboard = () => {
         </div>
       </main>
 
-      {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

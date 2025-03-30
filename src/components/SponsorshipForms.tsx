@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@clerk/clerk-react";
 import { Link } from "react-router-dom";
@@ -31,11 +33,16 @@ const SponsorshipForms = () => {
     name: "",
     email: "",
     phone: "",
+    age: "",
+    gender: "",
+    language: "",
+    city: "",
     project_name: "",
     category: "",
     amount: "",
-    description: "",
-    benefits: ""
+    social_platform: "",
+    followers_count: "",
+    social_link: ""
   });
   
   const [companyForm, setCompanyForm] = useState({
@@ -97,12 +104,17 @@ const SponsorshipForms = () => {
       const { error } = await supabase.from('client_requests').insert({
         name: clientForm.name,
         email: userEmail,
-        phone: clientForm.phone || null,
+        phone: clientForm.phone,
+        age: parseInt(clientForm.age) || null,
+        gender: clientForm.gender,
+        language: clientForm.language,
+        city: clientForm.city,
         project_name: clientForm.project_name,
         category: clientForm.category,
         amount: parseFloat(clientForm.amount),
-        description: clientForm.description,
-        benefits: clientForm.benefits
+        social_platform: clientForm.social_platform,
+        followers_count: clientForm.followers_count,
+        social_link: clientForm.social_link
       });
       
       if (error) throw error;
@@ -116,11 +128,16 @@ const SponsorshipForms = () => {
         name: "",
         email: "",
         phone: "",
+        age: "",
+        gender: "",
+        language: "",
+        city: "",
         project_name: "",
         category: "",
         amount: "",
-        description: "",
-        benefits: ""
+        social_platform: "",
+        followers_count: "",
+        social_link: ""
       });
       
       (e.target as HTMLFormElement).reset();
@@ -370,11 +387,67 @@ const SponsorshipForms = () => {
                     
                     <div className="grid gap-6 md:grid-cols-2">
                       <div className="space-y-2 text-left">
-                        <Label htmlFor="client-phone">Phone (Optional)</Label>
+                        <Label htmlFor="client-phone">Phone</Label>
                         <Input 
                           id="client-phone" 
                           placeholder="+1 (555) 123-4567" 
+                          required
                           value={clientForm.phone}
+                          onChange={handleClientFormChange}
+                        />
+                      </div>
+                      <div className="space-y-2 text-left">
+                        <Label htmlFor="client-age">Age</Label>
+                        <Input 
+                          id="client-age" 
+                          type="number" 
+                          placeholder="25" 
+                          required
+                          value={clientForm.age}
+                          onChange={handleClientFormChange}
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="grid gap-6 md:grid-cols-2">
+                      <div className="space-y-2 text-left">
+                        <Label>Gender</Label>
+                        <RadioGroup 
+                          value={clientForm.gender} 
+                          onValueChange={(value) => handleSelectChange(value, 'client', 'gender')}
+                          className="flex gap-4 pt-2"
+                          required
+                        >
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="male" id="client-gender-male" />
+                            <Label htmlFor="client-gender-male">Male</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="female" id="client-gender-female" />
+                            <Label htmlFor="client-gender-female">Female</Label>
+                          </div>
+                        </RadioGroup>
+                      </div>
+                      <div className="space-y-2 text-left">
+                        <Label htmlFor="client-language">Language You Speak</Label>
+                        <Input 
+                          id="client-language" 
+                          placeholder="English, Spanish, etc." 
+                          required 
+                          value={clientForm.language}
+                          onChange={handleClientFormChange}
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="grid gap-6 md:grid-cols-2">
+                      <div className="space-y-2 text-left">
+                        <Label htmlFor="client-city">Your City</Label>
+                        <Input 
+                          id="client-city" 
+                          placeholder="New York" 
+                          required 
+                          value={clientForm.city}
                           onChange={handleClientFormChange}
                         />
                       </div>
@@ -402,7 +475,6 @@ const SponsorshipForms = () => {
                             <SelectValue placeholder="Select category" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="all">All Categories</SelectItem>
                             <SelectItem value="Technology">Technology</SelectItem>
                             <SelectItem value="Arts & Culture">Arts & Culture</SelectItem>
                             <SelectItem value="Sports">Sports</SelectItem>
@@ -425,26 +497,46 @@ const SponsorshipForms = () => {
                       </div>
                     </div>
                     
-                    <div className="space-y-2 text-left">
-                      <Label htmlFor="client-description">Project Description</Label>
-                      <Textarea 
-                        id="client-description" 
-                        placeholder="Tell us about your project or event that needs sponsorship..." 
-                        rows={5}
-                        required
-                        value={clientForm.description}
-                        onChange={handleClientFormChange}
-                      />
+                    <div className="grid gap-6 md:grid-cols-2">
+                      <div className="space-y-2 text-left">
+                        <Label htmlFor="client-social_platform">Your Commercials</Label>
+                        <Select 
+                          required 
+                          value={clientForm.social_platform}
+                          onValueChange={(value) => handleSelectChange(value, 'client', 'social_platform')}
+                        >
+                          <SelectTrigger id="client-social_platform">
+                            <SelectValue placeholder="Select platform" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Youtube">Youtube</SelectItem>
+                            <SelectItem value="Instagram">Instagram</SelectItem>
+                            <SelectItem value="Facebook">Facebook</SelectItem>
+                            <SelectItem value="Pinterest">Pinterest</SelectItem>
+                            <SelectItem value="TikTok">TikTok</SelectItem>
+                            <SelectItem value="Other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2 text-left">
+                        <Label htmlFor="client-followers_count">Your Followers/Subscribers</Label>
+                        <Input 
+                          id="client-followers_count" 
+                          placeholder="10000" 
+                          required 
+                          value={clientForm.followers_count}
+                          onChange={handleClientFormChange}
+                        />
+                      </div>
                     </div>
                     
                     <div className="space-y-2 text-left">
-                      <Label htmlFor="client-benefits">Sponsorship Benefits</Label>
-                      <Textarea 
-                        id="client-benefits" 
-                        placeholder="What benefits will sponsors receive? (e.g., logo placement, mentions, etc.)" 
-                        rows={3}
+                      <Label htmlFor="client-social_link">Link to Social Media Account</Label>
+                      <Input 
+                        id="client-social_link" 
+                        placeholder="https://www.instagram.com/yourusername" 
                         required
-                        value={clientForm.benefits}
+                        value={clientForm.social_link}
                         onChange={handleClientFormChange}
                       />
                     </div>
