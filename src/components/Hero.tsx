@@ -1,8 +1,9 @@
+
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { Play, ArrowRight, HandCoins, Users, ChartBar } from "lucide-react";
+import { Play, ArrowRight, HandCoins, Users, ChartBar, Sparkles } from "lucide-react";
 
 const Hero = () => {
   return (
@@ -48,9 +49,9 @@ const Hero = () => {
               size="lg"
               className="bg-primary hover:bg-primary/90 text-white rounded-full px-8 h-12 text-lg shadow-lg shadow-primary/20 dark:shadow-primary/10"
             >
-              <Link to="/#sponsorship-forms">
+              <a href="/#sponsorship-forms">
                 Get Started
-              </Link>
+              </a>
             </Button>
             <Button
               asChild
@@ -59,7 +60,7 @@ const Hero = () => {
               className="border-primary text-primary hover:text-primary hover:bg-primary/5 rounded-full px-8 h-12 text-lg"
             >
               <Link to="/#about">
-                Learn More
+                <Sparkles className="mr-2 h-5 w-5" /> AI-Powered
               </Link>
             </Button>
           </motion.div>
