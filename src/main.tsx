@@ -44,8 +44,11 @@ const MainApp = () => {
     );
   }
 
+  // Fallback key for development - in production, you must set VITE_CLERK_PUBLISHABLE_KEY in your environment
+  const publishableKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || 'pk_test_Y2xpZW50LmNsZXJrLmRldiA';
+
   return (
-    <ClerkProvider publishableKey={import.meta.env.VITE_CLERK_PUBLISHABLE_KEY}>
+    <ClerkProvider publishableKey={publishableKey}>
       <QueryClientProvider client={queryClient}>
         <Router>
           <Routes>
