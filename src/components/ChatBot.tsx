@@ -7,13 +7,14 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageCircle, Bot, X } from "lucide-react";
 import { toast } from "sonner";
 
-// The updated API key for Gemini
-const GEMINI_API_KEY = "AIzaSyCrOxFNAlMVUZQPHz7EIJvtvkzCmVuJgDY";
-
 interface Message {
   role: "user" | "assistant";
   content: string;
 }
+
+// DeepSeek AI API configuration
+const DEEPSEEK_API_KEY = "sk-3d49d7d6ae754c138070f36223f96ca6";
+const DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions";
 
 const ChatBot = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -51,46 +52,46 @@ const ChatBot = () => {
     setIsLoading(true);
 
     try {
-      // Updated API endpoint to use the correct Gemini API endpoint
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            contents: [
-              {
-                parts: [
-                  {
-                    text: `You are a helpful assistant for Sponofy, a platform that connects sponsors with individuals seeking sponsorship. Answer the following question in a friendly and concise way: ${input}`,
-                  },
-                ],
-              },
-            ],
-            generationConfig: {
-              temperature: 0.7,
-              maxOutputTokens: 800,
-            },
-          }),
-        }
-      );
+      // Prepare the messages for DeepSeek API (including conversation history)
+      const apiMessages = messages.map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }));
+      
+      // Add the new user message
+      apiMessages.push({
+        role: "user",
+        content: input
+      });
+
+      const response = await fetch(DEEPSEEK_API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${DEEPSEEK_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: "deepseek-chat", // Using DeepSeek's chat model
+          messages: apiMessages,
+          max_tokens: 800,
+          temperature: 0.7,
+        }),
+      });
 
       const data = await response.json();
       
-      if (response.ok && data.candidates && data.candidates[0]?.content?.parts) {
-        const botResponse = data.candidates[0].content.parts[0].text;
+      if (response.ok && data.choices && data.choices[0]?.message) {
+        const botResponse = data.choices[0].message.content;
         setMessages((prev) => [
           ...prev,
           { role: "assistant", content: botResponse },
         ]);
       } else {
-        console.error("Gemini API error:", data);
+        console.error("DeepSeek API error:", data);
         throw new Error(data.error?.message || "Error communicating with AI");
       }
     } catch (error) {
-      console.error("Error calling Gemini API:", error);
+      console.error("Error calling DeepSeek API:", error);
       toast.error("Sorry, I couldn't process your request. Please try again.");
       setMessages((prev) => [
         ...prev,

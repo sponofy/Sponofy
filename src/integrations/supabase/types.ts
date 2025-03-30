@@ -11,44 +11,65 @@ export type Database = {
     Tables: {
       client_requests: {
         Row: {
+          age: number | null
           amount: number
           benefits: string
           category: string
+          city: string | null
           created_at: string
           description: string
           email: string
+          followers_count: string | null
+          gender: string | null
           id: string
+          language: string | null
           name: string
           phone: string | null
           project_name: string
+          social_link: string | null
+          social_platform: string | null
           status: string | null
           updated_at: string
         }
         Insert: {
+          age?: number | null
           amount: number
           benefits: string
           category: string
+          city?: string | null
           created_at?: string
           description: string
           email: string
+          followers_count?: string | null
+          gender?: string | null
           id?: string
+          language?: string | null
           name: string
           phone?: string | null
           project_name: string
+          social_link?: string | null
+          social_platform?: string | null
           status?: string | null
           updated_at?: string
         }
         Update: {
+          age?: number | null
           amount?: number
           benefits?: string
           category?: string
+          city?: string | null
           created_at?: string
           description?: string
           email?: string
+          followers_count?: string | null
+          gender?: string | null
           id?: string
+          language?: string | null
           name?: string
           phone?: string | null
           project_name?: string
+          social_link?: string | null
+          social_platform?: string | null
           status?: string | null
           updated_at?: string
         }

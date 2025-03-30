@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -114,7 +113,9 @@ const SponsorshipForms = () => {
         amount: parseFloat(clientForm.amount),
         social_platform: clientForm.social_platform,
         followers_count: clientForm.followers_count,
-        social_link: clientForm.social_link
+        social_link: clientForm.social_link,
+        description: "Not required",
+        benefits: "Not required"
       });
       
       if (error) throw error;
