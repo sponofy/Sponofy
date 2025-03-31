@@ -19,8 +19,8 @@ const AuthDialog = ({ isOpen, onOpenChange, initialView = "signIn" }: AuthDialog
     setActiveTab(initialView);
   }, [initialView]);
 
-  // Handle component complete
-  const handleComplete = () => {
+  // Close dialog and redirect to appropriate page
+  const handleClerkComplete = () => {
     onOpenChange(false);
     navigate('/dashboard');
   };
@@ -48,15 +48,15 @@ const AuthDialog = ({ isOpen, onOpenChange, initialView = "signIn" }: AuthDialog
           <div className="py-2">
             {activeTab === "signIn" ? (
               <SignIn
+                afterSignInUrl="/dashboard"
                 routing="path"
                 path="/sign-in"
-                afterSignInUrl="/dashboard"
               />
             ) : (
               <SignUp
-                routing="path"
-                path="/sign-up"
                 afterSignUpUrl="/dashboard"
+                routing="path"
+                path="/sign-up"  
               />
             )}
           </div>

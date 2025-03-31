@@ -1,5 +1,5 @@
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import Navbar from "@/components/Navbar";
@@ -14,7 +14,7 @@ import ChatBot from "@/components/ChatBot";
 import { Handshake, Rocket, Target } from "lucide-react";
 
 const Index = () => {
-  const chatbotRef = useRef<{ open: () => void } | null>(null);
+  const [chatbotRef, setChatbotRef] = useState<{ open: () => void } | null>(null);
 
   useEffect(() => {
     // Set the page title
@@ -25,8 +25,8 @@ const Index = () => {
   }, []);
 
   const handleOpenChatbot = () => {
-    if (chatbotRef.current && chatbotRef.current.open) {
-      chatbotRef.current.open();
+    if (chatbotRef && chatbotRef.open) {
+      chatbotRef.open();
     }
   };
 
