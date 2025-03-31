@@ -36,6 +36,8 @@ const App = () => {
             </Routes>
           </AnimatePresence>
         </Router>
+        <Toaster />
+        <Sonner />
       </TooltipProvider>
     </ThemeProvider>
   );
