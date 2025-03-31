@@ -1,5 +1,5 @@
 
-import { useState, useEffect, ChangeEvent } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,17 +34,49 @@ import {
 import { Input } from "@/components/ui/input";
 import {
   BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
+import {
+  BarChart as BarChartIcon,
   ChevronDown,
   Filter,
   Loader2,
+  LogOut,
   Search,
+  Trash2,
   Users,
 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useNavigate } from "react-router-dom";
+import { format, subMonths } from "date-fns";
+import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
 
 // Define types for our data
 interface ClientRequest {
-  id: string | number; // Accept both string and number for ID compatibility
+  id: string | number;
   created_at: string;
   name: string;
   email: string;
@@ -62,10 +94,11 @@ interface ClientRequest {
   followers_count?: string;
   social_link?: string;
   updated_at?: string;
+  status: string;
 }
 
 interface CompanyOffer {
-  id: string | number; // Accept both string and number for ID compatibility
+  id: string | number;
   created_at: string;
   company_name: string;
   contact_person: string;
@@ -76,9 +109,23 @@ interface CompanyOffer {
   requirements: string;
   phone?: string;
   additional_info?: string;
-  status?: string;
+  status: string;
   updated_at?: string;
 }
+
+// Time period options
+const timePeriods = {
+  all: "All Time",
+  today: "Today",
+  week: "This Week",
+  month: "This Month",
+  year: "This Year",
+};
+
+// Status options
+const statusOptions = ["pending", "completed", "approved", "rejected"];
+
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
@@ -87,8 +134,13 @@ const Dashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedTimePeriod, setSelectedTimePeriod] = useState<string>("all");
   const [filteredClients, setFilteredClients] = useState<ClientRequest[]>([]);
   const [filteredCompanies, setFilteredCompanies] = useState<CompanyOffer[]>([]);
+  const [clientPage, setClientPage] = useState(1);
+  const [companyPage, setCompanyPage] = useState(1);
+  const itemsPerPage = 10;
+  const navigate = useNavigate();
 
   // Categories mapping for display
   const categories = {
@@ -100,6 +152,10 @@ const Dashboard = () => {
     Charity: "Charity",
     Other: "Other"
   };
+
+  // Monthly data for charts
+  const [monthlyData, setMonthlyData] = useState<any[]>([]);
+  const [categoryData, setCategoryData] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -133,8 +189,89 @@ const Dashboard = () => {
     fetchData();
   }, []);
 
+  // Prepare monthly chart data
+  useEffect(() => {
+    const last6Months = Array.from({ length: 6 }, (_, i) => {
+      const date = subMonths(new Date(), i);
+      return {
+        month: format(date, 'MMM'),
+        monthYear: format(date, 'yyyy-MM'),
+        clients: 0,
+        companies: 0,
+      };
+    }).reverse();
+
+    // Count client requests per month
+    clientRequests.forEach(client => {
+      const monthYear = format(new Date(client.created_at), 'yyyy-MM');
+      const monthIndex = last6Months.findIndex(m => m.monthYear === monthYear);
+      if (monthIndex >= 0) {
+        last6Months[monthIndex].clients += 1;
+      }
+    });
+
+    // Count company offers per month
+    companyOffers.forEach(company => {
+      const monthYear = format(new Date(company.created_at), 'yyyy-MM');
+      const monthIndex = last6Months.findIndex(m => m.monthYear === monthYear);
+      if (monthIndex >= 0) {
+        last6Months[monthIndex].companies += 1;
+      }
+    });
+
+    setMonthlyData(last6Months.map(item => ({
+      name: item.month,
+      clients: item.clients,
+      companies: item.companies,
+    })));
+
+    // Prepare category data for pie chart
+    const categoryCounts: Record<string, number> = {};
+    
+    clientRequests.forEach(client => {
+      if (client.category) {
+        categoryCounts[client.category] = (categoryCounts[client.category] || 0) + 1;
+      }
+    });
+    
+    setCategoryData(Object.keys(categoryCounts).map(category => ({
+      name: category,
+      value: categoryCounts[category],
+    })));
+    
+  }, [clientRequests, companyOffers]);
+
   // Filter and search logic
   useEffect(() => {
+    // Helper function to filter by time period
+    const isInTimePeriod = (dateStr: string) => {
+      if (selectedTimePeriod === "all") return true;
+      
+      const date = new Date(dateStr);
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      
+      switch (selectedTimePeriod) {
+        case "today":
+          return date >= today;
+        case "week": {
+          const weekStart = new Date(now);
+          weekStart.setDate(now.getDate() - now.getDay());
+          return date >= weekStart;
+        }
+        case "month": {
+          const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+          return date >= monthStart;
+        }
+        case "year": {
+          const yearStart = new Date(now.getFullYear(), 0, 1);
+          return date >= yearStart;
+        }
+        default:
+          return true;
+      }
+    };
+
     // Filter clients
     const filteredClientResults = clientRequests.filter((client) => {
       const matchesSearch =
@@ -145,11 +282,14 @@ const Dashboard = () => {
 
       const matchesCategory =
         selectedCategory === "all" || client.category === selectedCategory;
+        
+      const matchesTimePeriod = isInTimePeriod(client.created_at);
 
-      return matchesSearch && matchesCategory;
+      return matchesSearch && matchesCategory && matchesTimePeriod;
     });
 
     setFilteredClients(filteredClientResults);
+    setClientPage(1);  // Reset to first page when filtering
 
     // Filter companies
     const filteredCompanyResults = companyOffers.filter((company) => {
@@ -163,48 +303,124 @@ const Dashboard = () => {
         selectedCategory === "all" ||
         company.industry === selectedCategory ||
         company.interests.includes(selectedCategory);
+        
+      const matchesTimePeriod = isInTimePeriod(company.created_at);
 
-      return matchesSearch && matchesIndustry;
+      return matchesSearch && matchesIndustry && matchesTimePeriod;
     });
 
     setFilteredCompanies(filteredCompanyResults);
-  }, [searchTerm, selectedCategory, clientRequests, companyOffers]);
+    setCompanyPage(1);  // Reset to first page when filtering
+  }, [searchTerm, selectedCategory, selectedTimePeriod, clientRequests, companyOffers]);
 
   // Dashboard overview statistics
   const totalClients = clientRequests.length;
   const totalCompanies = companyOffers.length;
-  const totalBudget = companyOffers.reduce(
-    (sum, company) => sum + (company.budget || 0),
-    0
+  const completedRequests = clientRequests.filter(client => client.status === "completed").length;
+  const pendingRequests = clientRequests.filter(client => client.status === "pending").length;
+
+  // Handle status update
+  const updateStatus = async (table: string, id: string | number, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from(table)
+        .update({ status: newStatus })
+        .eq("id", id);
+        
+      if (error) throw error;
+      
+      toast.success(`Status updated to ${newStatus}`);
+      
+      // Update local state
+      if (table === "client_requests") {
+        setClientRequests(prev => 
+          prev.map(client => 
+            client.id === id ? { ...client, status: newStatus } : client
+          )
+        );
+      } else if (table === "company_offers") {
+        setCompanyOffers(prev => 
+          prev.map(company => 
+            company.id === id ? { ...company, status: newStatus } : company
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Error updating status:", error);
+      toast.error("Failed to update status");
+    }
+  };
+
+  // Handle delete
+  const handleDelete = async (table: string, id: string | number) => {
+    if (!confirm("Are you sure you want to delete this item?")) return;
+    
+    try {
+      const { error } = await supabase
+        .from(table)
+        .delete()
+        .eq("id", id);
+        
+      if (error) throw error;
+      
+      toast.success("Item deleted successfully");
+      
+      // Update local state
+      if (table === "client_requests") {
+        setClientRequests(prev => prev.filter(client => client.id !== id));
+      } else if (table === "company_offers") {
+        setCompanyOffers(prev => prev.filter(company => company.id !== id));
+      }
+    } catch (error) {
+      console.error("Error deleting item:", error);
+      toast.error("Failed to delete item");
+    }
+  };
+
+  // Calculate pagination
+  const clientPageCount = Math.ceil(filteredClients.length / itemsPerPage);
+  const companyPageCount = Math.ceil(filteredCompanies.length / itemsPerPage);
+  
+  const paginatedClients = filteredClients.slice(
+    (clientPage - 1) * itemsPerPage,
+    clientPage * itemsPerPage
   );
-  const averageRequestAmount =
-    clientRequests.length > 0
-      ? clientRequests.reduce((sum, client) => sum + (client.amount || 0), 0) /
-        clientRequests.length
-      : 0;
+  
+  const paginatedCompanies = filteredCompanies.slice(
+    (companyPage - 1) * itemsPerPage,
+    companyPage * itemsPerPage
+  );
 
-  // Get stats by category
-  const clientsByCategory = Object.keys(categories).reduce((acc, category) => {
-    if (category !== "all") {
-      acc[category] = clientRequests.filter(
-        (client) => client.category === category
-      ).length;
-    }
-    return acc;
-  }, {} as Record<string, number>);
+  // Handle logout
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/");
+    toast.success("Logged out successfully");
+  };
 
-  const companiesByIndustry = Object.keys(categories).reduce((acc, category) => {
-    if (category !== "all") {
-      acc[category] = companyOffers.filter(
-        (company) => company.industry === category || company.interests.includes(category)
-      ).length;
+  const getStatusBadgeVariant = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case "completed":
+        return "secondary";
+      case "approved":
+        return "default";
+      case "rejected":
+        return "destructive";
+      case "pending":
+      default:
+        return "outline";
     }
-    return acc;
-  }, {} as Record<string, number>);
+  };
 
   return (
     <div className="container py-10">
-      <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+        <Button variant="outline" onClick={handleLogout} className="flex items-center gap-2">
+          <LogOut className="h-4 w-4" />
+          Logout
+        </Button>
+      </div>
 
       <Tabs
         defaultValue="overview"
@@ -258,32 +474,32 @@ const Dashboard = () => {
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">
-                      Average Request
+                      Completed Requests
                     </CardTitle>
-                    <BarChart className="h-4 w-4 text-muted-foreground" />
+                    <BarChartIcon className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
-                      ${averageRequestAmount.toFixed(2)}
+                      {completedRequests}
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      Per sponsorship request
+                      Successfully matched
                     </p>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">
-                      Total Available Budget
+                      Pending Requests
                     </CardTitle>
-                    <BarChart className="h-4 w-4 text-muted-foreground" />
+                    <BarChartIcon className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
-                      ${totalBudget.toLocaleString()}
+                      {pendingRequests}
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      From all companies
+                      Awaiting processing
                     </p>
                   </CardContent>
                 </Card>
@@ -292,89 +508,64 @@ const Dashboard = () => {
               <div className="grid gap-4 md:grid-cols-2">
                 <Card className="col-span-1">
                   <CardHeader>
-                    <CardTitle>Clients by Category</CardTitle>
+                    <CardTitle>Requests Last 6 Months</CardTitle>
                     <CardDescription>
-                      Distribution of sponsorship requests
+                      Monthly client and company activity
                     </CardDescription>
                   </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      {Object.entries(clientsByCategory).map(
-                        ([category, count]) => (
-                          <div
-                            key={category}
-                            className="flex items-center justify-between"
-                          >
-                            <div className="flex items-center">
-                              <div className="text-sm">{category}</div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <div className="text-sm font-medium">{count}</div>
-                              <div className="w-20 h-2 rounded-full bg-muted overflow-hidden">
-                                <div
-                                  className="h-full bg-primary"
-                                  style={{
-                                    width: `${
-                                      totalClients > 0
-                                        ? (count / totalClients) * 100
-                                        : 0
-                                    }%`,
-                                  }}
-                                ></div>
-                              </div>
-                            </div>
-                          </div>
-                        )
-                      )}
-                    </div>
+                  <CardContent className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={monthlyData}
+                        margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Bar dataKey="clients" fill="#8884d8" name="Clients" />
+                        <Bar dataKey="companies" fill="#82ca9d" name="Companies" />
+                      </BarChart>
+                    </ResponsiveContainer>
                   </CardContent>
                 </Card>
 
                 <Card className="col-span-1">
                   <CardHeader>
-                    <CardTitle>Companies by Industry</CardTitle>
+                    <CardTitle>Category Distribution</CardTitle>
                     <CardDescription>
-                      Distribution of sponsorship offers
+                      Requests by category
                     </CardDescription>
                   </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      {Object.entries(companiesByIndustry).map(
-                        ([industry, count]) => (
-                          <div
-                            key={industry}
-                            className="flex items-center justify-between"
-                          >
-                            <div className="flex items-center">
-                              <div className="text-sm">{industry}</div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <div className="text-sm font-medium">{count}</div>
-                              <div className="w-20 h-2 rounded-full bg-muted overflow-hidden">
-                                <div
-                                  className="h-full bg-primary"
-                                  style={{
-                                    width: `${
-                                      totalCompanies > 0
-                                        ? (count / totalCompanies) * 100
-                                        : 0
-                                    }%`,
-                                  }}
-                                ></div>
-                              </div>
-                            </div>
-                          </div>
-                        )
-                      )}
-                    </div>
+                  <CardContent className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={categoryData}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={true}
+                          outerRadius={80}
+                          fill="#8884d8"
+                          dataKey="value"
+                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                        >
+                          {categoryData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
                   </CardContent>
                 </Card>
               </div>
             </TabsContent>
 
             <TabsContent value="clients" className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex w-full max-w-sm items-center space-x-2">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div className="flex w-full md:w-auto items-center space-x-2">
                   <div className="relative w-full">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -386,7 +577,7 @@ const Dashboard = () => {
                     />
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <Filter className="h-4 w-4" />
                   <Select
                     value={selectedCategory}
@@ -397,6 +588,22 @@ const Dashboard = () => {
                     </SelectTrigger>
                     <SelectContent>
                       {Object.entries(categories).map(([value, label]) => (
+                        <SelectItem key={value} value={value}>
+                          {label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  
+                  <Select
+                    value={selectedTimePeriod}
+                    onValueChange={setSelectedTimePeriod}
+                  >
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Time Period" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(timePeriods).map(([value, label]) => (
                         <SelectItem key={value} value={value}>
                           {label}
                         </SelectItem>
@@ -414,93 +621,116 @@ const Dashboard = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Phone</TableHead>
-                        <TableHead>Age</TableHead>
-                        <TableHead>Gender</TableHead>
-                        <TableHead>Language</TableHead>
-                        <TableHead>City</TableHead>
-                        <TableHead>Project</TableHead>
-                        <TableHead>Category</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Social Platform</TableHead>
-                        <TableHead>Followers</TableHead>
-                        <TableHead>Social Link</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredClients.length === 0 ? (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
                         <TableRow>
-                          <TableCell
-                            colSpan={14}
-                            className="text-center h-32"
-                          >
-                            No client requests found
-                          </TableCell>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Email</TableHead>
+                          <TableHead>Project</TableHead>
+                          <TableHead>Category</TableHead>
+                          <TableHead>Amount</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Actions</TableHead>
                         </TableRow>
-                      ) : (
-                        filteredClients.map((client) => (
-                          <TableRow key={client.id}>
-                            <TableCell>{client.name}</TableCell>
-                            <TableCell>{client.email}</TableCell>
-                            <TableCell>{client.phone || "N/A"}</TableCell>
-                            <TableCell>{client.age || "N/A"}</TableCell>
-                            <TableCell>
-                              {client.gender ? (
-                                <Badge variant="outline">
-                                  {client.gender}
-                                </Badge>
-                              ) : (
-                                "N/A"
-                              )}
-                            </TableCell>
-                            <TableCell>{client.language || "N/A"}</TableCell>
-                            <TableCell>{client.city || "N/A"}</TableCell>
-                            <TableCell>{client.project_name}</TableCell>
-                            <TableCell>
-                              <Badge>{client.category}</Badge>
-                            </TableCell>
-                            <TableCell>${client.amount}</TableCell>
-                            <TableCell>
-                              {client.social_platform || "N/A"}
-                            </TableCell>
-                            <TableCell>{client.followers_count || "N/A"}</TableCell>
-                            <TableCell>
-                              {client.social_link ? (
-                                <a
-                                  href={client.social_link}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-blue-500 hover:underline"
-                                >
-                                  Link
-                                </a>
-                              ) : (
-                                "N/A"
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              <Button variant="ghost" size="sm">
-                                View
-                              </Button>
+                      </TableHeader>
+                      <TableBody>
+                        {paginatedClients.length === 0 ? (
+                          <TableRow>
+                            <TableCell
+                              colSpan={7}
+                              className="text-center h-32"
+                            >
+                              No client requests found
                             </TableCell>
                           </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
+                        ) : (
+                          paginatedClients.map((client) => (
+                            <TableRow key={client.id}>
+                              <TableCell>{client.name}</TableCell>
+                              <TableCell>{client.email}</TableCell>
+                              <TableCell>{client.project_name}</TableCell>
+                              <TableCell>
+                                <Badge variant="outline">{client.category}</Badge>
+                              </TableCell>
+                              <TableCell>${client.amount}</TableCell>
+                              <TableCell>
+                                <Badge variant={getStatusBadgeVariant(client.status || "pending")}>
+                                  {client.status || "pending"}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button variant="outline" size="sm" className="h-8 gap-1">
+                                        Status <ChevronDown className="h-4 w-4" />
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                      {statusOptions.map((status) => (
+                                        <DropdownMenuItem
+                                          key={status}
+                                          onClick={() => updateStatus("client_requests", client.id, status)}
+                                        >
+                                          {status.charAt(0).toUpperCase() + status.slice(1)}
+                                        </DropdownMenuItem>
+                                      ))}
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="icon"
+                                    onClick={() => handleDelete("client_requests", client.id)}
+                                  >
+                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  
+                  {clientPageCount > 1 && (
+                    <Pagination className="mt-4">
+                      <PaginationContent>
+                        <PaginationItem>
+                          <PaginationPrevious 
+                            onClick={() => setClientPage(p => Math.max(1, p - 1))}
+                            className={clientPage <= 1 ? "pointer-events-none opacity-50" : ""}
+                          />
+                        </PaginationItem>
+                        
+                        {Array.from({ length: clientPageCount }, (_, i) => i + 1).map(page => (
+                          <PaginationItem key={page}>
+                            <PaginationLink 
+                              isActive={page === clientPage} 
+                              onClick={() => setClientPage(page)}
+                            >
+                              {page}
+                            </PaginationLink>
+                          </PaginationItem>
+                        ))}
+                        
+                        <PaginationItem>
+                          <PaginationNext 
+                            onClick={() => setClientPage(p => Math.min(clientPageCount, p + 1))}
+                            className={clientPage >= clientPageCount ? "pointer-events-none opacity-50" : ""}
+                          />
+                        </PaginationItem>
+                      </PaginationContent>
+                    </Pagination>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
 
             <TabsContent value="companies" className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex w-full max-w-sm items-center space-x-2">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div className="flex w-full md:w-auto items-center space-x-2">
                   <div className="relative w-full">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -512,7 +742,7 @@ const Dashboard = () => {
                     />
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <Filter className="h-4 w-4" />
                   <Select
                     value={selectedCategory}
@@ -523,6 +753,22 @@ const Dashboard = () => {
                     </SelectTrigger>
                     <SelectContent>
                       {Object.entries(categories).map(([value, label]) => (
+                        <SelectItem key={value} value={value}>
+                          {label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  
+                  <Select
+                    value={selectedTimePeriod}
+                    onValueChange={setSelectedTimePeriod}
+                  >
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Time Period" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(timePeriods).map(([value, label]) => (
                         <SelectItem key={value} value={value}>
                           {label}
                         </SelectItem>
@@ -540,50 +786,110 @@ const Dashboard = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Company</TableHead>
-                        <TableHead>Contact Person</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Industry</TableHead>
-                        <TableHead>Budget</TableHead>
-                        <TableHead>Interests</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredCompanies.length === 0 ? (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
                         <TableRow>
-                          <TableCell colSpan={7} className="text-center h-32">
-                            No company offers found
-                          </TableCell>
+                          <TableHead>Company</TableHead>
+                          <TableHead>Contact Person</TableHead>
+                          <TableHead>Email</TableHead>
+                          <TableHead>Industry</TableHead>
+                          <TableHead>Budget</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Actions</TableHead>
                         </TableRow>
-                      ) : (
-                        filteredCompanies.map((company) => (
-                          <TableRow key={company.id}>
-                            <TableCell className="font-medium">
-                              {company.company_name}
-                            </TableCell>
-                            <TableCell>{company.contact_person}</TableCell>
-                            <TableCell>{company.email}</TableCell>
-                            <TableCell>
-                              <Badge variant="outline">
-                                {company.industry}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>${company.budget}</TableCell>
-                            <TableCell>{company.interests}</TableCell>
-                            <TableCell>
-                              <Button variant="ghost" size="sm">
-                                View
-                              </Button>
+                      </TableHeader>
+                      <TableBody>
+                        {paginatedCompanies.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={7} className="text-center h-32">
+                              No company offers found
                             </TableCell>
                           </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
+                        ) : (
+                          paginatedCompanies.map((company) => (
+                            <TableRow key={company.id}>
+                              <TableCell className="font-medium">
+                                {company.company_name}
+                              </TableCell>
+                              <TableCell>{company.contact_person}</TableCell>
+                              <TableCell>{company.email}</TableCell>
+                              <TableCell>
+                                <Badge variant="outline">
+                                  {company.industry}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>${company.budget}</TableCell>
+                              <TableCell>
+                                <Badge variant={getStatusBadgeVariant(company.status || "pending")}>
+                                  {company.status || "pending"}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button variant="outline" size="sm" className="h-8 gap-1">
+                                        Status <ChevronDown className="h-4 w-4" />
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                      {statusOptions.map((status) => (
+                                        <DropdownMenuItem
+                                          key={status}
+                                          onClick={() => updateStatus("company_offers", company.id, status)}
+                                        >
+                                          {status.charAt(0).toUpperCase() + status.slice(1)}
+                                        </DropdownMenuItem>
+                                      ))}
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="icon"
+                                    onClick={() => handleDelete("company_offers", company.id)}
+                                  >
+                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  
+                  {companyPageCount > 1 && (
+                    <Pagination className="mt-4">
+                      <PaginationContent>
+                        <PaginationItem>
+                          <PaginationPrevious 
+                            onClick={() => setCompanyPage(p => Math.max(1, p - 1))}
+                            className={companyPage <= 1 ? "pointer-events-none opacity-50" : ""}
+                          />
+                        </PaginationItem>
+                        
+                        {Array.from({ length: companyPageCount }, (_, i) => i + 1).map(page => (
+                          <PaginationItem key={page}>
+                            <PaginationLink 
+                              isActive={page === companyPage} 
+                              onClick={() => setCompanyPage(page)}
+                            >
+                              {page}
+                            </PaginationLink>
+                          </PaginationItem>
+                        ))}
+                        
+                        <PaginationItem>
+                          <PaginationNext 
+                            onClick={() => setCompanyPage(p => Math.min(companyPageCount, p + 1))}
+                            className={companyPage >= companyPageCount ? "pointer-events-none opacity-50" : ""}
+                          />
+                        </PaginationItem>
+                      </PaginationContent>
+                    </Pagination>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
