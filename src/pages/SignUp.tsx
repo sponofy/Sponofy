@@ -67,7 +67,11 @@ const SignUp = () => {
             )}
             
             <div className={isLoading ? "opacity-0 h-0 overflow-hidden" : "opacity-100 transition-opacity duration-300"}>
-              <ClerkSignUp signInUrl="/sign-in" />
+              <ClerkSignUp 
+                signInUrl="/sign-in"
+                redirectUrl="/#sponsorship-forms"
+                afterSignUpUrl="/#sponsorship-forms"
+              />
             </div>
           </motion.div>
         </motion.div>
