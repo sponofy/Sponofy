@@ -4,7 +4,6 @@ import { ThemeProvider } from "@/components/ui/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
-import { useUser } from "@clerk/clerk-react";
 
 // Pages
 import Index from "./pages/Index";
@@ -20,8 +19,6 @@ import NotFound from "./pages/NotFound";
 import { AnimatePresence } from "framer-motion";
 
 const App = () => {
-  const { isLoaded, isSignedIn } = useUser();
-
   return (
     <ThemeProvider defaultTheme="light">
       <TooltipProvider>
@@ -31,14 +28,7 @@ const App = () => {
               <Route path="/" element={<Index />} />
               <Route path="/sign-in/*" element={<SignIn />} />
               <Route path="/sign-up/*" element={<SignUp />} />
-              <Route 
-                path="/dashboard" 
-                element={
-                  isLoaded && !isSignedIn ? 
-                    <Navigate to="/sign-in" replace /> : 
-                    <UserDashboard />
-                } 
-              />
+              <Route path="/dashboard" element={<UserDashboard />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/admin/login" element={<AdminLogin />} />
               <Route path="/admin/dashboard" element={<Dashboard />} />

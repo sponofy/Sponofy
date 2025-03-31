@@ -21,7 +21,10 @@ const MainApp = () => {
   // Conditional rendering based on Clerk key availability
   if (hasClerkKey) {
     return (
-      <ClerkProvider publishableKey={publishableKey}>
+      <ClerkProvider 
+        publishableKey={publishableKey}
+        clerkJSVersion="5.56.0-snapshot.v20250312225817"
+      >
         <QueryClientProvider client={queryClient}>
           <App />
           <SonnerToaster position="top-right" />
