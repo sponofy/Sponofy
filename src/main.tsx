@@ -24,6 +24,10 @@ const MainApp = () => {
       <ClerkProvider 
         publishableKey={publishableKey}
         clerkJSVersion="5.56.0-snapshot.v20250312225817"
+        signInUrl="/sign-in"
+        signUpUrl="/sign-up"
+        afterSignInUrl="/dashboard"
+        afterSignUpUrl="/dashboard"
       >
         <QueryClientProvider client={queryClient}>
           <App />

@@ -35,8 +35,6 @@ const App = () => {
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AnimatePresence>
-          <Toaster />
-          <Sonner />
         </Router>
       </TooltipProvider>
     </ThemeProvider>
