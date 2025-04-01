@@ -19,10 +19,10 @@ const AuthDialog = ({ isOpen, onOpenChange, initialView = "signIn" }: AuthDialog
     setActiveTab(initialView);
   }, [initialView]);
 
-  // Close dialog and redirect to sponsorship forms
+  // Close dialog and redirect to appropriate page
   const handleClerkComplete = () => {
     onOpenChange(false);
-    navigate('/#sponsorship-forms');
+    navigate('/dashboard');
   };
 
   return (
@@ -48,15 +48,13 @@ const AuthDialog = ({ isOpen, onOpenChange, initialView = "signIn" }: AuthDialog
           <div className="py-2">
             {activeTab === "signIn" ? (
               <SignIn
-                afterSignInUrl="/#sponsorship-forms"
-                redirectUrl="/#sponsorship-forms"
+                afterSignInUrl="/dashboard"
                 routing="path"
                 path="/sign-in"
               />
             ) : (
               <SignUp
-                afterSignUpUrl="/#sponsorship-forms"
-                redirectUrl="/#sponsorship-forms"
+                afterSignUpUrl="/dashboard"
                 routing="path"
                 path="/sign-up"  
               />
