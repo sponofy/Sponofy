@@ -17,10 +17,10 @@ createRoot(document.getElementById("root")!).render(
     clerkJSVersion="5.56.0-snapshot.v20250312225817"
     signInUrl="/sign-in"
     signUpUrl="/sign-up"
-    signInFallbackRedirectUrl="/#sponsorship-forms"
-    signUpFallbackRedirectUrl="/#sponsorship-forms"
-    signInForceRedirectUrl="/#sponsorship-forms"
-    signUpForceRedirectUrl="/#sponsorship-forms"
+    signInFallbackRedirectUrl="/dashboard"
+    signUpFallbackRedirectUrl="/"
+    signInForceRedirectUrl="/dashboard"
+    signUpForceRedirectUrl="/"
     afterSignOutUrl="/"
   >
     <App />

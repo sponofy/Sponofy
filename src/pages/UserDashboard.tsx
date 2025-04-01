@@ -13,7 +13,7 @@ import { ThemeProvider } from "@/components/ui/theme-provider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Handshake, Users, Bell, Settings, LogOut, ExternalLink } from "lucide-react";
+import { Handshake, Users, Bell, Settings, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -84,10 +84,6 @@ const UserDashboard = () => {
         variant: "destructive"
       });
     }
-  };
-
-  const navigateToSponsorshipForms = () => {
-    navigate('/#sponsorship-forms');
   };
 
   if (!isLoaded) {
@@ -179,6 +175,9 @@ const UserDashboard = () => {
                         <CardContent className="pb-2">
                           <div className="text-3xl font-bold">{userStats.clientRequests}</div>
                         </CardContent>
+                        <CardFooter>
+                          <Button variant="outline" size="sm" className="w-full">View All</Button>
+                        </CardFooter>
                       </Card>
                       <Card className="hover:shadow-lg transition-all duration-300">
                         <CardHeader className="pb-2">
@@ -188,6 +187,9 @@ const UserDashboard = () => {
                         <CardContent className="pb-2">
                           <div className="text-3xl font-bold">{userStats.companyOffers}</div>
                         </CardContent>
+                        <CardFooter>
+                          <Button variant="outline" size="sm" className="w-full">View All</Button>
+                        </CardFooter>
                       </Card>
                       <Card className="hover:shadow-lg transition-all duration-300">
                         <CardHeader className="pb-2">
@@ -197,6 +199,9 @@ const UserDashboard = () => {
                         <CardContent className="pb-2">
                           <div className="text-3xl font-bold">{userStats.pendingRequests}</div>
                         </CardContent>
+                        <CardFooter>
+                          <Button variant="outline" size="sm" className="w-full">View All</Button>
+                        </CardFooter>
                       </Card>
                       <Card className="hover:shadow-lg transition-all duration-300">
                         <CardHeader className="pb-2">
@@ -206,28 +211,11 @@ const UserDashboard = () => {
                         <CardContent className="pb-2">
                           <div className="text-3xl font-bold">{userStats.completedRequests}</div>
                         </CardContent>
+                        <CardFooter>
+                          <Button variant="outline" size="sm" className="w-full">View All</Button>
+                        </CardFooter>
                       </Card>
                     </div>
-                    
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="flex items-center justify-between">
-                          <span>Looking for sponsors?</span>
-                          <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                        </CardTitle>
-                        <CardDescription>Create a sponsorship request to find sponsors for your event or project.</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <Button 
-                          variant="default" 
-                          className="w-full bg-gradient-to-r from-primary to-teal-500 hover:opacity-90"
-                          onClick={navigateToSponsorshipForms}
-                        >
-                          <Handshake className="mr-2 h-4 w-4" />
-                          Get Sponsored with Sponofy
-                        </Button>
-                      </CardContent>
-                    </Card>
                   </TabsContent>
                   
                   <TabsContent value="opportunities" className="space-y-6">

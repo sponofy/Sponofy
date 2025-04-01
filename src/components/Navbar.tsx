@@ -47,6 +47,13 @@ const Navbar = ({ openChatbot }: NavbarProps) => {
     }
   };
 
+  const handleOpenChat = () => {
+    if (openChatbot) {
+      openChatbot();
+    }
+    setIsMobileMenuOpen(false);
+  };
+
   return (
     <>
       <header
@@ -90,6 +97,12 @@ const Navbar = ({ openChatbot }: NavbarProps) => {
                 className="px-4 py-2 text-foreground/90 dark:text-foreground/80 hover:text-primary dark:hover:text-primary transition-colors rounded-md"
               >
                 Connect
+              </button>
+              <button
+                onClick={handleOpenChat}
+                className="px-4 py-2 text-foreground/90 dark:text-foreground/80 hover:text-primary dark:hover:text-primary transition-colors rounded-md"
+              >
+                AI Support
               </button>
             </nav>
 
@@ -199,6 +212,12 @@ const Navbar = ({ openChatbot }: NavbarProps) => {
                     className="text-2xl font-medium text-foreground/90 hover:text-primary transition-colors"
                   >
                     Connect
+                  </button>
+                  <button
+                    onClick={handleOpenChat}
+                    className="text-2xl font-medium text-foreground/90 hover:text-primary transition-colors"
+                  >
+                    AI Support
                   </button>
                   
                   <SignedIn>
