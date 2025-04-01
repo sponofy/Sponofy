@@ -1,12 +1,18 @@
 
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { ThemeToggle } from "./ui/theme-toggle";
-import { Button } from "@/components/ui/button";
-import { Menu, X, LogIn } from "lucide-react";
-import { useUser, SignedIn, SignedOut, UserButton } from "@clerk/clerk-react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import AuthDialog from "./AuthDialog";
+import { SignedIn, SignedOut, UserButton, useUser } from "@clerk/clerk-react";
+import { 
+  Menu, 
+  X, 
+  ChevronRight, 
+  ChevronDown, 
+  MessageSquare 
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import AuthDialog from "@/components/AuthDialog";
+import useMediaQuery from "@/hooks/use-media-query";
 
 interface NavbarProps {
   openChatbot?: () => void;
@@ -15,245 +21,324 @@ interface NavbarProps {
 const Navbar = ({ openChatbot }: NavbarProps) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
-  const [authDialogView, setAuthDialogView] = useState<"signIn" | "signUp">("signIn");
-  const { isSignedIn, user } = useUser();
+  const [authInitialView, setAuthInitialView] = useState<"signIn" | "signUp">("signIn");
+  const isDesktop = useMediaQuery("(min-width: 768px)");
+  const { user, isLoaded } = useUser();
   const navigate = useNavigate();
+  const location = useLocation();
 
+  // Handle scroll effect
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 10) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
+      const scrollPosition = window.scrollY;
+      setIsScrolled(scrollPosition > 20);
     };
 
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const handleOpenAuthDialog = (view: "signIn" | "signUp" = "signIn") => {
-    setAuthDialogView(view);
+  // Close mobile menu when switching to desktop
+  useEffect(() => {
+    if (isDesktop) {
+      setIsMobileMenuOpen(false);
+    }
+  }, [isDesktop]);
+
+  // Handle links click - close menu and scroll to section
+  const handleLinkClick = (sectionId: string) => {
+    setIsMobileMenuOpen(false);
+    setIsDropdownOpen(false);
+    
+    if (location.pathname !== "/") {
+      navigate(`/${sectionId}`);
+    } else {
+      const element = document.getElementById(sectionId.replace("#", ""));
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth" });
+      }
+    }
+  };
+
+  // Open auth dialog with specific view
+  const openAuthDialog = (view: "signIn" | "signUp") => {
+    setAuthInitialView(view);
     setIsAuthDialogOpen(true);
     setIsMobileMenuOpen(false);
   };
 
-  const scrollToSection = (sectionId: string) => {
-    setIsMobileMenuOpen(false);
-    const section = document.getElementById(sectionId);
-    if (section) {
-      section.scrollIntoView({ behavior: "smooth" });
-    }
-  };
-
-  const handleOpenChat = () => {
-    if (openChatbot) {
-      openChatbot();
-    }
-    setIsMobileMenuOpen(false);
-  };
-
   return (
-    <>
-      <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          isScrolled
-            ? "bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-sm py-3"
-            : "bg-transparent py-5"
-        }`}
-      >
-        <div className="container mx-auto px-4 md:px-6">
-          <div className="flex items-center justify-between">
-            <Link
-              to="/"
-              className="flex items-center space-x-2 text-2xl font-bold text-primary transition-all duration-300 hover:opacity-90"
+    <motion.header
+      className={`fixed top-0 w-full z-50 transition-all duration-300 ${
+        isScrolled 
+          ? "bg-background/95 backdrop-blur supports-backdrop-blur:bg-background/60 shadow-sm border-b border-border/40" 
+          : "bg-transparent"
+      }`}
+      initial={{ y: -100 }}
+      animate={{ y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <div className="container mx-auto px-4 md:px-6 flex items-center justify-between h-16 relative">
+        {/* Logo */}
+        <Link to="/" className="flex items-center space-x-2 text-xl font-bold text-primary transition-all duration-300 hover:opacity-90">
+          <span className="relative z-10">Sponofy</span>
+        </Link>
+        
+        {/* Desktop Navigation */}
+        <nav className="hidden md:flex items-center space-x-1">
+          <Button variant="ghost" onClick={() => handleLinkClick("")}>Home</Button>
+          <Button variant="ghost" onClick={() => handleLinkClick("#about")}>About</Button>
+          <Button variant="ghost" onClick={() => handleLinkClick("#services")}>Services</Button>
+          
+          <div className="relative">
+            <Button 
+              variant="ghost" 
+              className="flex items-center"
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
             >
-              <span className="relative z-10">Sponofy</span>
-            </Link>
-
-            {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center space-x-1">
-              <Link
-                to="/"
-                className="px-4 py-2 text-foreground/90 dark:text-foreground/80 hover:text-primary dark:hover:text-primary transition-colors rounded-md"
+              Forms 
+              <ChevronDown className={`ml-1 h-4 w-4 transition-transform ${isDropdownOpen ? "rotate-180" : ""}`} />
+            </Button>
+            
+            {/* Dropdown */}
+            <AnimatePresence>
+              {isDropdownOpen && (
+                <motion.div 
+                  className="absolute right-0 mt-1 w-48 bg-popover shadow-md rounded-md overflow-hidden z-50 border border-border"
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -5 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <SignedIn>
+                    <div 
+                      className="block w-full text-left px-4 py-2 hover:bg-muted transition-colors cursor-pointer"
+                      onClick={() => {
+                        handleLinkClick("#sponsorship-forms");
+                        setIsDropdownOpen(false);
+                      }}
+                    >
+                      Sponsorship Forms
+                    </div>
+                  </SignedIn>
+                  <SignedOut>
+                    <div 
+                      className="block w-full text-left px-4 py-2 hover:bg-muted transition-colors cursor-pointer"
+                      onClick={() => {
+                        openAuthDialog("signIn");
+                        setIsDropdownOpen(false);
+                      }}
+                    >
+                      Request Sponsorship
+                    </div>
+                    <div 
+                      className="block w-full text-left px-4 py-2 hover:bg-muted transition-colors cursor-pointer"
+                      onClick={() => {
+                        openAuthDialog("signIn");
+                        setIsDropdownOpen(false);
+                      }}
+                    >
+                      Offer Sponsorship
+                    </div>
+                  </SignedOut>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+          
+          <Button variant="ghost" onClick={() => handleLinkClick("#faq")}>FAQ</Button>
+          
+          {openChatbot && (
+            <Button 
+              variant="ghost" 
+              className="flex items-center"
+              onClick={openChatbot}
+            >
+              <MessageSquare className="mr-1 h-4 w-4" /> 
+              Chat
+            </Button>
+          )}
+        </nav>
+        
+        {/* Auth buttons (desktop) */}
+        <div className="hidden md:flex items-center space-x-3">
+          <SignedIn>
+            <div className="flex items-center space-x-3">
+              <Button 
+                variant="ghost" 
+                onClick={() => navigate("/#sponsorship-forms")}
               >
-                Home
-              </Link>
-              <button
-                onClick={() => scrollToSection("about")}
-                className="px-4 py-2 text-foreground/90 dark:text-foreground/80 hover:text-primary dark:hover:text-primary transition-colors rounded-md"
+                Sponsorship Forms
+              </Button>
+              <UserButton afterSignOutUrl="/" />
+            </div>
+          </SignedIn>
+          <SignedOut>
+            <Button 
+              variant="outline" 
+              onClick={() => openAuthDialog("signIn")}
+            >
+              Sign In
+            </Button>
+            <Button 
+              variant="default" 
+              className="bg-gradient-to-r from-[#13ae90] to-[#20d4a9] hover:opacity-90 text-white border-0"
+              onClick={() => openAuthDialog("signUp")}
+            >
+              Sign Up
+            </Button>
+          </SignedOut>
+        </div>
+        
+        {/* Mobile Menu Button */}
+        <div className="md:hidden">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-label="Toggle menu"
+          >
+            {isMobileMenuOpen ? (
+              <X className="h-5 w-5" />
+            ) : (
+              <Menu className="h-5 w-5" />
+            )}
+          </Button>
+        </div>
+      </div>
+      
+      {/* Mobile Menu */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            className="md:hidden absolute top-16 left-0 right-0 bg-background border-b border-border shadow-lg z-40"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="container mx-auto px-4 py-4 flex flex-col space-y-3">
+              <Button 
+                variant="ghost" 
+                className="w-full justify-between"
+                onClick={() => handleLinkClick("")}
               >
-                About Us
-              </button>
-              <button
-                onClick={() => scrollToSection("services")}
-                className="px-4 py-2 text-foreground/90 dark:text-foreground/80 hover:text-primary dark:hover:text-primary transition-colors rounded-md"
+                <span>Home</span>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+              <Button 
+                variant="ghost" 
+                className="w-full justify-between"
+                onClick={() => handleLinkClick("#about")}
               >
-                Services
-              </button>
-              <button
-                onClick={() => scrollToSection("sponsorship-forms")}
-                className="px-4 py-2 text-foreground/90 dark:text-foreground/80 hover:text-primary dark:hover:text-primary transition-colors rounded-md"
+                <span>About</span>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+              <Button 
+                variant="ghost" 
+                className="w-full justify-between"
+                onClick={() => handleLinkClick("#services")}
               >
-                Connect
-              </button>
-              <button
-                onClick={handleOpenChat}
-                className="px-4 py-2 text-foreground/90 dark:text-foreground/80 hover:text-primary dark:hover:text-primary transition-colors rounded-md"
-              >
-                AI Support
-              </button>
-            </nav>
-
-            <div className="hidden md:flex items-center space-x-4">
-              <ThemeToggle />
+                <span>Services</span>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
               
               <SignedIn>
-                <motion.div 
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="flex items-center gap-4"
+                <Button 
+                  variant="ghost" 
+                  className="w-full justify-between"
+                  onClick={() => handleLinkClick("#sponsorship-forms")}
                 >
-                  <Button
-                    asChild
-                    variant="outline"
-                    className="border-primary/30 hover:border-primary/60 transition-all duration-300"
-                  >
-                    <Link to="/dashboard">Dashboard</Link>
-                  </Button>
-                  <UserButton afterSignOutUrl="/" />
-                </motion.div>
+                  <span>Sponsorship Forms</span>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
               </SignedIn>
-              
               <SignedOut>
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                <Button 
+                  variant="ghost" 
+                  className="w-full justify-between"
+                  onClick={() => openAuthDialog("signIn")}
                 >
-                  <Button
-                    className="bg-primary hover:bg-primary/90 text-white rounded-full group relative overflow-hidden"
-                    onClick={() => navigate("/sign-in")}
+                  <span>Request Sponsorship</span>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  className="w-full justify-between"
+                  onClick={() => openAuthDialog("signIn")}
+                >
+                  <span>Offer Sponsorship</span>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </SignedOut>
+              
+              <Button 
+                variant="ghost" 
+                className="w-full justify-between"
+                onClick={() => handleLinkClick("#faq")}
+              >
+                <span>FAQ</span>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+              
+              {openChatbot && (
+                <Button 
+                  variant="ghost" 
+                  className="w-full justify-between"
+                  onClick={() => {
+                    openChatbot();
+                    setIsMobileMenuOpen(false);
+                  }}
+                >
+                  <span>Chat</span>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              )}
+              
+              <SignedIn>
+                <div className="flex items-center justify-between pt-3 border-t border-border">
+                  <div className="flex items-center">
+                    {isLoaded && user && (
+                      <div className="ml-2 text-sm">
+                        Hi, {user.firstName || user.username || "User"}
+                      </div>
+                    )}
+                  </div>
+                  <UserButton afterSignOutUrl="/" />
+                </div>
+              </SignedIn>
+              <SignedOut>
+                <div className="grid grid-cols-2 gap-3 pt-3 border-t border-border">
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => openAuthDialog("signIn")}
                   >
-                    <span className="relative z-10 flex items-center">
-                      <LogIn className="mr-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                      Become a Member
-                    </span>
-                    <span className="absolute inset-0 bg-gradient-to-r from-secondary to-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-0"></span>
+                    Sign In
                   </Button>
-                </motion.div>
+                  <Button 
+                    variant="default"
+                    className="w-full bg-gradient-to-r from-[#13ae90] to-[#20d4a9] hover:opacity-90 text-white border-0"
+                    onClick={() => openAuthDialog("signUp")}
+                  >
+                    Sign Up
+                  </Button>
+                </div>
               </SignedOut>
             </div>
-
-            {/* Mobile Menu Button */}
-            <div className="flex items-center space-x-2 md:hidden">
-              <ThemeToggle />
-              
-              <SignedIn>
-                <UserButton afterSignOutUrl="/" />
-              </SignedIn>
-              
-              <button
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="p-2 text-foreground/80 hover:text-primary transition-colors rounded-full"
-              >
-                {isMobileMenuOpen ? (
-                  <X className="h-6 w-6" />
-                ) : (
-                  <Menu className="h-6 w-6" />
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Mobile Menu */}
-        <AnimatePresence>
-          {isMobileMenuOpen && (
-            <motion.div
-              className="md:hidden fixed inset-0 z-40 bg-background/95 dark:bg-background/95 backdrop-blur-sm"
-              initial={{ opacity: 0, x: "100%" }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: "100%" }}
-              transition={{ duration: 0.3, ease: "easeInOut" }}
-            >
-              <div className="flex flex-col p-8 space-y-8 h-full">
-                <div className="flex justify-end">
-                  <button
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="p-2 text-foreground/80 hover:text-primary transition-colors rounded-full"
-                  >
-                    <X className="h-6 w-6" />
-                  </button>
-                </div>
-                <nav className="flex flex-col space-y-6 items-center justify-center flex-grow">
-                  <Link
-                    to="/"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="text-2xl font-medium text-foreground/90 hover:text-primary transition-colors"
-                  >
-                    Home
-                  </Link>
-                  <button
-                    onClick={() => scrollToSection("about")}
-                    className="text-2xl font-medium text-foreground/90 hover:text-primary transition-colors"
-                  >
-                    About Us
-                  </button>
-                  <button
-                    onClick={() => scrollToSection("services")}
-                    className="text-2xl font-medium text-foreground/90 hover:text-primary transition-colors"
-                  >
-                    Services
-                  </button>
-                  <button
-                    onClick={() => scrollToSection("sponsorship-forms")}
-                    className="text-2xl font-medium text-foreground/90 hover:text-primary transition-colors"
-                  >
-                    Connect
-                  </button>
-                  <button
-                    onClick={handleOpenChat}
-                    className="text-2xl font-medium text-foreground/90 hover:text-primary transition-colors"
-                  >
-                    AI Support
-                  </button>
-                  
-                  <SignedIn>
-                    <Button
-                      asChild
-                      variant="outline"
-                      className="mt-6 w-full max-w-xs border-primary/30 hover:border-primary/60"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      <Link to="/dashboard">Dashboard</Link>
-                    </Button>
-                  </SignedIn>
-                  
-                  <SignedOut>
-                    <Button
-                      className="mt-6 w-full max-w-xs bg-primary hover:bg-primary/90 text-white rounded-full"
-                      onClick={() => navigate("/sign-in")}
-                    >
-                      <LogIn className="mr-2 h-5 w-5" />
-                      Become a Member
-                    </Button>
-                  </SignedOut>
-                </nav>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </header>
-
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
       {/* Auth Dialog */}
       <AuthDialog 
         isOpen={isAuthDialogOpen} 
-        onOpenChange={setIsAuthDialogOpen}
-        initialView={authDialogView}
+        onOpenChange={setIsAuthDialogOpen} 
+        initialView={authInitialView}
       />
-    </>
+    </motion.header>
   );
 };
 
