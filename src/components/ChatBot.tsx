@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -74,7 +73,6 @@ User's new message: ${input}
 Respond helpfully, accurately, and in a friendly tone. Keep your responses concise and focused on sponsorship topics.
 `;
 
-      // Call the Gemini API
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`, {
         method: "POST",
         headers: {
@@ -83,11 +81,7 @@ Respond helpfully, accurately, and in a friendly tone. Keep your responses conci
         body: JSON.stringify({
           contents: [
             {
-              parts: [
-                {
-                  text: sponsorshipPrompt
-                }
-              ]
+              parts: [{ text: sponsorshipPrompt }]
             }
           ],
           generationConfig: {
@@ -100,28 +94,25 @@ Respond helpfully, accurately, and in a friendly tone. Keep your responses conci
       });
 
       const data = await response.json();
+
+      if (!response.ok) {
+        console.error("API Error:", data);
+        throw new Error(data.error?.message || "API Request Failed");
+      }
+
+      const botResponse = data?.candidates?.[0]?.content?.parts?.[0]?.text;
       
-      if (response.ok && data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
-        // Extract the response text from Gemini
-        const botResponse = data.candidates[0].content.parts[0].text;
-        
-        setMessages((prev) => [
-          ...prev,
-          { role: "assistant", content: botResponse },
-        ]);
+      if (botResponse) {
+        setMessages((prev) => [...prev, { role: "assistant", content: botResponse }]);
       } else {
-        console.error("Gemini API error:", data);
-        throw new Error(data.error?.message || "Error communicating with AI");
+        throw new Error("Empty response from API");
       }
     } catch (error) {
       console.error("Error calling Gemini API:", error);
       toast.error("Sorry, I couldn't process your request. Please try again.");
       setMessages((prev) => [
         ...prev,
-        {
-          role: "assistant",
-          content: "I'm having trouble connecting right now. Please try again in a moment.",
-        },
+        { role: "assistant", content: "I'm having trouble connecting. Try again later." }
       ]);
     } finally {
       setIsLoading(false);
