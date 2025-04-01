@@ -150,17 +150,6 @@ const UserDashboard = () => {
                     Settings
                   </Button>
                 </nav>
-                
-                <div className="mt-8 px-4">
-                  <Button 
-                    variant="default" 
-                    className="w-full bg-gradient-to-r from-primary to-teal-500 hover:opacity-90"
-                    onClick={navigateToSponsorshipForms}
-                  >
-                    <Handshake className="mr-2 h-4 w-4" />
-                    Get Sponsored with Sponofy
-                  </Button>
-                </div>
               </div>
             </aside>
 
@@ -178,18 +167,6 @@ const UserDashboard = () => {
                   <h1 className="text-3xl font-bold tracking-tight">Welcome, {user?.firstName || user?.username || "User"}</h1>
                   <p className="text-muted-foreground">Here's what's happening with your sponsorship activities.</p>
                 </div>
-                
-                {/* Get Sponsored Button (Mobile Only) */}
-                <div className="md:hidden mb-4">
-                  <Button 
-                    variant="default" 
-                    className="w-full bg-gradient-to-r from-primary to-teal-500 hover:opacity-90"
-                    onClick={navigateToSponsorshipForms}
-                  >
-                    <Handshake className="mr-2 h-4 w-4" />
-                    Get Sponsored with Sponofy
-                  </Button>
-                </div>
 
                 <Tabs defaultValue="overview" className="w-full" value={activeTab} onValueChange={setActiveTab}>
                   <TabsContent value="overview" className="space-y-6">
@@ -202,9 +179,6 @@ const UserDashboard = () => {
                         <CardContent className="pb-2">
                           <div className="text-3xl font-bold">{userStats.clientRequests}</div>
                         </CardContent>
-                        <CardFooter>
-                          <Button variant="outline" size="sm" className="w-full">View All</Button>
-                        </CardFooter>
                       </Card>
                       <Card className="hover:shadow-lg transition-all duration-300">
                         <CardHeader className="pb-2">
@@ -214,9 +188,6 @@ const UserDashboard = () => {
                         <CardContent className="pb-2">
                           <div className="text-3xl font-bold">{userStats.companyOffers}</div>
                         </CardContent>
-                        <CardFooter>
-                          <Button variant="outline" size="sm" className="w-full">View All</Button>
-                        </CardFooter>
                       </Card>
                       <Card className="hover:shadow-lg transition-all duration-300">
                         <CardHeader className="pb-2">
@@ -226,9 +197,6 @@ const UserDashboard = () => {
                         <CardContent className="pb-2">
                           <div className="text-3xl font-bold">{userStats.pendingRequests}</div>
                         </CardContent>
-                        <CardFooter>
-                          <Button variant="outline" size="sm" className="w-full">View All</Button>
-                        </CardFooter>
                       </Card>
                       <Card className="hover:shadow-lg transition-all duration-300">
                         <CardHeader className="pb-2">
@@ -238,9 +206,6 @@ const UserDashboard = () => {
                         <CardContent className="pb-2">
                           <div className="text-3xl font-bold">{userStats.completedRequests}</div>
                         </CardContent>
-                        <CardFooter>
-                          <Button variant="outline" size="sm" className="w-full">View All</Button>
-                        </CardFooter>
                       </Card>
                     </div>
                     
