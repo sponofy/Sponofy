@@ -12,9 +12,8 @@ interface Message {
   content: string;
 }
 
-// DeepSeek AI API configuration
-const DEEPSEEK_API_KEY = "sk-3d49d7d6ae754c138070f36223f96ca6";
-const DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions";
+// Google Generative AI API configuration
+const GEMINI_API_KEY = "AIzaSyDG1Ab4bOk2CdxHMCwWTyyLJudtqwYMXfA";
 
 const ChatBot = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -52,52 +51,76 @@ const ChatBot = () => {
     setIsLoading(true);
 
     try {
-      // Prepare the messages for DeepSeek API (including conversation history)
-      const apiMessages = messages.map(msg => ({
-        role: msg.role,
-        content: msg.content
-      }));
+      // Prepare conversation history for context
+      const conversationHistory = messages.map(msg => `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`).join('\n');
       
-      // Add the new user message
-      apiMessages.push({
-        role: "user",
-        content: input
-      });
+      // Add sponsorship context for better responses
+      const sponsorshipPrompt = `
+You are Sponofy's AI assistant, an expert on sponsorships, partnerships, and business connections.
+Your goal is to help users understand how Sponofy's platform can connect them with potential sponsors or sponsorship opportunities.
 
-      const response = await fetch(DEEPSEEK_API_URL, {
+Some key information about Sponofy:
+- Sponofy connects businesses looking for sponsorship with companies willing to sponsor
+- We offer both sponsor-seeking and sponsor-offering services
+- Our platform uses AI matching to find the most compatible partnerships
+- Users can fill out detailed forms to specify their sponsorship needs
+- We handle partnerships across various industries including sports, events, content creation, and more
+
+Previous conversation:
+${conversationHistory}
+
+User's new message: ${input}
+
+Respond helpfully, accurately, and in a friendly tone. Keep your responses concise and focused on sponsorship topics.
+`;
+
+      // Call the Gemini API
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${DEEPSEEK_API_KEY}`
         },
         body: JSON.stringify({
-          model: "deepseek-chat", // Using DeepSeek's chat model
-          messages: apiMessages,
-          max_tokens: 800,
-          temperature: 0.7,
+          contents: [
+            {
+              parts: [
+                {
+                  text: sponsorshipPrompt
+                }
+              ]
+            }
+          ],
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 800,
+            topP: 0.95,
+            topK: 40
+          }
         }),
       });
 
       const data = await response.json();
       
-      if (response.ok && data.choices && data.choices[0]?.message) {
-        const botResponse = data.choices[0].message.content;
+      if (response.ok && data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
+        // Extract the response text from Gemini
+        const botResponse = data.candidates[0].content.parts[0].text;
+        
         setMessages((prev) => [
           ...prev,
           { role: "assistant", content: botResponse },
         ]);
       } else {
-        console.error("DeepSeek API error:", data);
+        console.error("Gemini API error:", data);
         throw new Error(data.error?.message || "Error communicating with AI");
       }
     } catch (error) {
-      console.error("Error calling DeepSeek API:", error);
+      console.error("Error calling Gemini API:", error);
       toast.error("Sorry, I couldn't process your request. Please try again.");
       setMessages((prev) => [
         ...prev,
         {
           role: "assistant",
-          content: "I'm having trouble connecting to my brain right now. Please try again in a moment.",
+          content: "I'm having trouble connecting right now. Please try again in a moment.",
         },
       ]);
     } finally {
