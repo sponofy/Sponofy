@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -48,9 +49,9 @@ const Hero = () => {
               size="lg"
               className="bg-primary hover:bg-primary/90 text-white rounded-full px-8 h-12 text-lg shadow-lg shadow-primary/20 dark:shadow-primary/10"
             >
-              <Link to="/#sponsorship-forms">
+              <a href="#sponsorship-forms">
                 Get Started
-              </Link>
+              </a>
             </Button>
             <Button
               asChild

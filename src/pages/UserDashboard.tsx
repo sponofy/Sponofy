@@ -13,7 +13,7 @@ import { ThemeProvider } from "@/components/ui/theme-provider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Handshake, Users, Bell, Settings, LogOut } from "lucide-react";
+import { Handshake, Users, Bell, Settings, LogOut, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -86,6 +86,10 @@ const UserDashboard = () => {
     }
   };
 
+  const navigateToSponsorshipForms = () => {
+    navigate('/#sponsorship-forms');
+  };
+
   if (!isLoaded) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -146,6 +150,17 @@ const UserDashboard = () => {
                     Settings
                   </Button>
                 </nav>
+                
+                <div className="mt-8 px-4">
+                  <Button 
+                    variant="default" 
+                    className="w-full bg-gradient-to-r from-primary to-teal-500 hover:opacity-90"
+                    onClick={navigateToSponsorshipForms}
+                  >
+                    <Handshake className="mr-2 h-4 w-4" />
+                    Get Sponsored with Sponofy
+                  </Button>
+                </div>
               </div>
             </aside>
 
@@ -162,6 +177,18 @@ const UserDashboard = () => {
                 <div>
                   <h1 className="text-3xl font-bold tracking-tight">Welcome, {user?.firstName || user?.username || "User"}</h1>
                   <p className="text-muted-foreground">Here's what's happening with your sponsorship activities.</p>
+                </div>
+                
+                {/* Get Sponsored Button (Mobile Only) */}
+                <div className="md:hidden mb-4">
+                  <Button 
+                    variant="default" 
+                    className="w-full bg-gradient-to-r from-primary to-teal-500 hover:opacity-90"
+                    onClick={navigateToSponsorshipForms}
+                  >
+                    <Handshake className="mr-2 h-4 w-4" />
+                    Get Sponsored with Sponofy
+                  </Button>
                 </div>
 
                 <Tabs defaultValue="overview" className="w-full" value={activeTab} onValueChange={setActiveTab}>
@@ -216,6 +243,26 @@ const UserDashboard = () => {
                         </CardFooter>
                       </Card>
                     </div>
+                    
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center justify-between">
+                          <span>Looking for sponsors?</span>
+                          <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                        </CardTitle>
+                        <CardDescription>Create a sponsorship request to find sponsors for your event or project.</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <Button 
+                          variant="default" 
+                          className="w-full bg-gradient-to-r from-primary to-teal-500 hover:opacity-90"
+                          onClick={navigateToSponsorshipForms}
+                        >
+                          <Handshake className="mr-2 h-4 w-4" />
+                          Get Sponsored with Sponofy
+                        </Button>
+                      </CardContent>
+                    </Card>
                   </TabsContent>
                   
                   <TabsContent value="opportunities" className="space-y-6">
