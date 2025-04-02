@@ -197,18 +197,23 @@ const Dashboard = () => {
       } else {
         setCompanyOffers(companyData as CompanyOffer[]);
         
+        const categoriesObj = clientData?.reduce((acc: Record<string, number>, item: ClientRequest) => {
+          acc[item.category] = (acc[item.category] || 0) + 1;
+          return acc;
+        }, {}) || {};
+        
         const industries = companyData.reduce((acc: Record<string, number>, item: CompanyOffer) => {
           acc[item.industry] = (acc[item.industry] || 0) + 1;
           return acc;
         }, {});
         
-        const categoryStatsArray: CategoryStats[] = Object.keys(industries).map((key, index) => ({
+        const industryStatsArray: CategoryStats[] = Object.keys(industries).map((key, index) => ({
           name: key,
           count: industries[key],
           color: COLORS[(index + Object.keys(categoriesObj).length) % COLORS.length]
         }));
         
-        setCategoryStats(prev => [...prev, ...categoryStatsArray]);
+        setCategoryStats(prev => [...prev, ...industryStatsArray]);
       }
       
       generateMonthlyStats(clientData || [], companyData || []);
