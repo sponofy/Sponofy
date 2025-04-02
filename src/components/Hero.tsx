@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -5,6 +6,13 @@ import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Play, ArrowRight, HandCoins, Users, ChartBar } from "lucide-react";
 
 const Hero = () => {
+  const scrollToSponsorshipForms = () => {
+    const section = document.getElementById("sponsorship-forms");
+    if (section) {
+      section.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
   return (
     <section className="relative pt-32 pb-20 md:pt-40 md:pb-32 overflow-hidden">
       {/* Background Elements */}
@@ -44,13 +52,11 @@ const Hero = () => {
             transition={{ duration: 0.5, delay: 0.2 }}
           >
             <Button
-              asChild
               size="lg"
               className="bg-primary hover:bg-primary/90 text-white rounded-full px-8 h-12 text-lg shadow-lg shadow-primary/20 dark:shadow-primary/10"
+              onClick={scrollToSponsorshipForms}
             >
-              <Link to="/#sponsorship-forms">
-                Get Started
-              </Link>
+              Get Started
             </Button>
             <Button
               asChild
