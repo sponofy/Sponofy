@@ -20,6 +20,17 @@ const Index = () => {
     
     // Scroll to top on load
     window.scrollTo(0, 0);
+    
+    // Check if we need to scroll to a specific section (from URL hash)
+    const hash = window.location.hash;
+    if (hash) {
+      setTimeout(() => {
+        const element = document.querySelector(hash);
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth" });
+        }
+      }, 100);
+    }
   }, []);
 
   return (
