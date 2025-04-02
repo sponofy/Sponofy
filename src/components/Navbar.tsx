@@ -155,14 +155,14 @@ const Navbar = ({ openChatbot }: NavbarProps) => {
           </div>
         </div>
 
-        {/* Mobile Menu */}
+        {/* Mobile Menu - Changed animation from right-to-left to top-to-bottom */}
         <AnimatePresence>
           {isMobileMenuOpen && (
             <motion.div
               className="md:hidden fixed inset-0 z-40 bg-background/95 dark:bg-background/95 backdrop-blur-sm"
-              initial={{ opacity: 0, x: "100%" }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: "100%" }}
+              initial={{ opacity: 0, y: "-100%" }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: "-100%" }}
               transition={{ duration: 0.3, ease: "easeInOut" }}
             >
               <div className="flex flex-col p-8 space-y-8 h-full">
