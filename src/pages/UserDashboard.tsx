@@ -150,14 +150,6 @@ const UserDashboard = () => {
                     <Settings className="mr-2 h-4 w-4" />
                     Settings
                   </Button>
-                  <Button
-                    variant="default"
-                    className="w-full justify-start mt-4"
-                    onClick={navigateToSponsorshipForms}
-                  >
-                    <Handshake className="mr-2 h-4 w-4" />
-                    Get sponsorship with Sponofy
-                  </Button>
                 </nav>
               </div>
             </aside>
@@ -216,6 +208,19 @@ const UserDashboard = () => {
                           <div className="text-3xl font-bold">{userStats.completedRequests}</div>
                         </CardContent>
                       </Card>
+                    </div>
+                    
+                    {/* Sponsorship button moved below cards */}
+                    <div className="flex justify-center">
+                      <Button
+                        variant="default"
+                        size="lg"
+                        className="mt-2"
+                        onClick={navigateToSponsorshipForms}
+                      >
+                        <Handshake className="mr-2 h-5 w-5" />
+                        Get sponsorship with Sponofy
+                      </Button>
                     </div>
                   </TabsContent>
                   
