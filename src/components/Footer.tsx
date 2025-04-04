@@ -110,7 +110,7 @@ const Footer = () => {
         <div className="border-t border-border pt-8 text-left text-foreground/60">
           <p>© {new Date().getFullYear()} Sponofy. All rights reserved.</p>
           <div className="mt-2 space-x-4 text-sm">
-            <Link to="#" className="hover:text-primary transition-colors">Privacy Policy</Link>
+            <Link to="/admin/login" className="hover:text-primary transition-colors">Privacy Policy</Link>
             <Link to="#" className="hover:text-primary transition-colors">Terms of Service</Link>
           </div>
         </div>
