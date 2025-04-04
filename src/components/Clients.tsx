@@ -12,23 +12,23 @@ const Clients = () => {
   const clients = [
     {
       name: "Google",
-      logo: "/lovable-uploads/ddfcd66a-48ad-4805-81a1-e94af6828ba3.png"
+      logo: "/lovable-uploads/GOOGLE.png"
     },
     {
       name: "Meta",
-      logo: "/lovable-uploads/59923816-5924-4674-88a2-30b1d0d9dc13.png"
+      logo: "/lovable-uploads/META.png"
     },
     {
       name: "Amazon",
-      logo: "/lovable-uploads/41fbd11d-41be-49e8-8a2b-cfe2432537f2.png"
+      logo: "/lovable-uploads/AMAZON.png"
     },
     {
       name: "Alibaba",
-      logo: "/lovable-uploads/51d8f059-b0d6-4613-a521-41fa99e1b18f.png"
+      logo: "/lovable-uploads/ALIBABA.png"
     },
     {
       name: "Shopify",
-      logo: "/lovable-uploads/8d94bf34-49a8-4ae9-adbd-a0d23d2d1f43.png"
+      logo: "/lovable-uploads/SHOPIFY.png"
     }
   ];
   

@@ -89,7 +89,7 @@ const Navbar = ({ openChatbot }: NavbarProps) => {
                 onClick={() => scrollToSection("sponsorship-forms")}
                 className="px-4 py-2 text-foreground/90 dark:text-foreground/80 hover:text-primary dark:hover:text-primary transition-colors rounded-md"
               >
-                Get Sponsored
+                Connect
               </button>
             </nav>
 

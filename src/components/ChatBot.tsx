@@ -1,20 +1,14 @@
-
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageCircle, Bot, X } from "lucide-react";
-import { toast } from "sonner";
 
 interface Message {
   role: "user" | "assistant";
   content: string;
 }
-
-// DeepSeek AI API configuration
-const DEEPSEEK_API_KEY = "sk-3d49d7d6ae754c138070f36223f96ca6";
-const DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions";
 
 const ChatBot = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -35,74 +29,33 @@ const ChatBot = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
-  
-  // Function to open the chat
+
   const openChat = () => {
     setIsOpen(true);
   };
 
   const handleSendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    
+
     if (!input.trim()) return;
-    
+
     const userMessage = { role: "user" as const, content: input };
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
 
-    try {
-      // Prepare the messages for DeepSeek API (including conversation history)
-      const apiMessages = messages.map(msg => ({
-        role: msg.role,
-        content: msg.content
-      }));
-      
-      // Add the new user message
-      apiMessages.push({
-        role: "user",
-        content: input
-      });
-
-      const response = await fetch(DEEPSEEK_API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${DEEPSEEK_API_KEY}`
-        },
-        body: JSON.stringify({
-          model: "deepseek-chat", // Using DeepSeek's chat model
-          messages: apiMessages,
-          max_tokens: 800,
-          temperature: 0.7,
-        }),
-      });
-
-      const data = await response.json();
-      
-      if (response.ok && data.choices && data.choices[0]?.message) {
-        const botResponse = data.choices[0].message.content;
-        setMessages((prev) => [
-          ...prev,
-          { role: "assistant", content: botResponse },
-        ]);
-      } else {
-        console.error("DeepSeek API error:", data);
-        throw new Error(data.error?.message || "Error communicating with AI");
-      }
-    } catch (error) {
-      console.error("Error calling DeepSeek API:", error);
-      toast.error("Sorry, I couldn't process your request. Please try again.");
+    // Simulate a delayed response for development message
+    setTimeout(() => {
       setMessages((prev) => [
         ...prev,
         {
           role: "assistant",
-          content: "I'm having trouble connecting to my brain right now. Please try again in a moment.",
+          content: "This feature is under development and coming soon.",
         },
       ]);
-    } finally {
       setIsLoading(false);
-    }
+    }, 1000); // Simulate a 1-second delay
+
   };
 
   return (

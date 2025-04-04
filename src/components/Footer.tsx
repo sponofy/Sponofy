@@ -37,13 +37,13 @@ const Footer = () => {
               <a href="#" className="text-foreground/60 hover:text-primary" aria-label="Facebook">
                 <Facebook className="h-5 w-5" />
               </a>
-              <a href="#" className="text-foreground/60 hover:text-primary" aria-label="Twitter">
+              <a href="https://x.com/sponofy?t=jv723NGEEzaHN0oFOO-Bdw&s=08" className="text-foreground/60 hover:text-primary" aria-label="Twitter">
                 <Twitter className="h-5 w-5" />
               </a>
-              <a href="#" className="text-foreground/60 hover:text-primary" aria-label="Instagram">
+              <a href="https://www.instagram.com/sponofy?utm_source=qr&igsh=MXY0aDc4ZnVmNGV1eQ==" className="text-foreground/60 hover:text-primary" aria-label="Instagram">
                 <Instagram className="h-5 w-5" />
               </a>
-              <a href="#" className="text-foreground/60 hover:text-primary" aria-label="LinkedIn">
+              <a href="https://www.linkedin.com/in/sponofy-4208b3356?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app" className="text-foreground/60 hover:text-primary" aria-label="LinkedIn">
                 <Linkedin className="h-5 w-5" />
               </a>
             </div>
@@ -75,15 +75,15 @@ const Footer = () => {
             <ul className="space-y-4">
               <li className="flex items-start">
                 <MapPin className="h-5 w-5 text-primary mr-3 mt-0.5" />
-                <span className="text-foreground/70">123 Sponsorship Ave, San Francisco, CA 94103</span>
+                <span className="text-foreground/70">Wagholi, Pune, Maharashtra 412207</span>
               </li>
-              <li className="flex items-start">
+              {/* <li className="flex items-start">
                 <Phone className="h-5 w-5 text-primary mr-3 mt-0.5" />
-                <span className="text-foreground/70">+1 (555) 123-4567</span>
-              </li>
+                <span className="text-foreground/70"></span>
+              </li> */}
               <li className="flex items-start">
                 <Mail className="h-5 w-5 text-primary mr-3 mt-0.5" />
-                <span className="text-foreground/70">contact@sponofy.com</span>
+                <span className="text-foreground/70">sponofyweb@gmail.com</span>
               </li>
             </ul>
           </div>
@@ -110,8 +110,8 @@ const Footer = () => {
         <div className="border-t border-border pt-8 text-left text-foreground/60">
           <p>© {new Date().getFullYear()} Sponofy. All rights reserved.</p>
           <div className="mt-2 space-x-4 text-sm">
-            <Link to="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link>
-            <Link to="/terms" className="hover:text-primary transition-colors">Terms of Service</Link>
+            <Link to="#" className="hover:text-primary transition-colors">Privacy Policy</Link>
+            <Link to="#" className="hover:text-primary transition-colors">Terms of Service</Link>
           </div>
         </div>
       </div>

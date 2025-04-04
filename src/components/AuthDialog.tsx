@@ -87,6 +87,7 @@ const AuthDialog = ({ isOpen, onOpenChange, initialView = "signIn" }: AuthDialog
         </div>
       </DialogContent>
     </Dialog>
+    
   );
 };
 

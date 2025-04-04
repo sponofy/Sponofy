@@ -56,7 +56,7 @@ const Hero = () => {
               className="bg-primary hover:bg-primary/90 text-white rounded-full px-8 h-12 text-lg shadow-lg shadow-primary/20 dark:shadow-primary/10"
               onClick={scrollToSponsorshipForms}
             >
-              Get Started
+              Get Sponsored
             </Button>
             <Button
               asChild

@@ -11,49 +11,50 @@ import {
 } from "@/components/ui/carousel";
 import { Quote } from "lucide-react";
 
-// Testimonial data
+
 const testimonials = [
   {
     id: 1,
-    name: "Sarah Johnson",
-    role: "Marketing Director",
-    company: "TechVision Inc.",
-    avatar: "/lovable-uploads/0c1f26fd-5db2-4016-a245-65b6e2b88ec2.png",
-    quote: "Sponofy transformed how we approach sponsorships. Their matching algorithm helped us find partners that truly align with our brand values, resulting in a 40% increase in ROI compared to our previous partnerships."
+    name: "Amey Pande",
+    role: "Digitl Marketing",
+    company: "Vardhayani.inc",
+    avatar: "/lovable-uploads/Pande1.jpg",
+    quote: "Sponofy completely changed how we find sponsors. Their matching tool boosted our ROI by 40%!"
   },
   {
     id: 2,
-    name: "Michael Chen",
+    name: "Krishana Jhahangid",
     role: "Event Organizer",
-    company: "Global Summit Series",
-    avatar: "/lovable-uploads/0c1f26fd-5db2-4016-a245-65b6e2b88ec2.png",
-    quote: "As an event organizer, finding the right sponsors was always our biggest challenge. Sponofy simplified the entire process and helped us secure partnerships with top-tier brands that perfectly matched our audience demographics."
+    company: "Jhahangid Automobiles",
+    avatar: "/lovable-uploads/jahangid.jpg",
+    quote: "Finding the right sponsors was tough. Sponofy made it seamless. We secured top-tier partners easily!"
   },
   {
     id: 3,
-    name: "Aisha Patel",
-    role: "Sponsorship Manager",
-    company: "Community Sports League",
-    avatar: "/lovable-uploads/0c1f26fd-5db2-4016-a245-65b6e2b88ec2.png",
-    quote: "The transparency and efficiency of Sponofy's platform is unmatched. We've been able to build long-term relationships with sponsors who are genuinely interested in supporting our community initiatives."
+    name: "Yash Naik",
+    role: "Marketing Head",
+    company: "Naik Beverages",
+    avatar: "/lovable-uploads/Yash.jpg",
+    quote: "Sponofy connects us with sponsors who truly care about our mission. The process is effortless!"
   },
   {
     id: 4,
-    name: "Daniel Rodriguez",
+    name: "Taufak Shaikh",
     role: "Startup Founder",
     company: "InnovateTech",
-    avatar: "/lovable-uploads/0c1f26fd-5db2-4016-a245-65b6e2b88ec2.png",
-    quote: "As a startup with limited resources, finding sponsors seemed impossible until we discovered Sponofy. Their platform made our small business attractive to major sponsors by highlighting our unique value proposition."
+    avatar: "/lovable-uploads/tofk.jpg",
+    quote: "As a startup, finding sponsors was a struggle. Sponofy made us stand out to the right brands!"
   },
   {
     id: 5,
-    name: "Emma Williams",
+    name: "Tanya D'Souza",
     role: "Brand Partnerships Lead",
     company: "FutureForward",
-    avatar: "/lovable-uploads/0c1f26fd-5db2-4016-a245-65b6e2b88ec2.png",
-    quote: "Sponofy's data-driven approach to matching sponsors with opportunities has revolutionized our partnerships strategy. We're now able to quantify the impact of each sponsorship in ways we never could before."
+    avatar: "/lovable-uploads/Gibli.jpg",
+    quote: "Sponofy’s data-driven approach changed our strategy. Now we measure sponsorship impact like never before!"
   }
 ];
+
 
 const Testimonials = () => {
   return (
