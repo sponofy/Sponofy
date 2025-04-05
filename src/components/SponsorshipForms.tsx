@@ -453,10 +453,10 @@ const SponsorshipForms = () => {
                         />
                       </div>
                       <div className="space-y-2 text-left">
-                        <Label htmlFor="client-project_name">Project/Event Name</Label>
+                        <Label htmlFor="client-project_name">Your Niche</Label>
                         <Input 
                           id="client-project_name" 
-                          placeholder="Annual Tech Conference" 
+                          placeholder="Fitness, Car Reviwes, etc.." 
                           required 
                           value={clientForm.project_name}
                           onChange={handleClientFormChange}
@@ -486,7 +486,7 @@ const SponsorshipForms = () => {
                         </Select>
                       </div>
                       <div className="space-y-2 text-left">
-                        <Label htmlFor="client-amount">Sponsorship Amount Needed ($)</Label>
+                        <Label htmlFor="client-amount">Sponsorship Amount Expected ($)</Label>
                         <Input 
                           id="client-amount" 
                           type="number" 
