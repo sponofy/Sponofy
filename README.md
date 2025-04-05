@@ -1,6 +1,7 @@
 # 💫 About Me:
 Connecting Brands 🤝 Creators, Seamlessly! 🚀<br>Welcome to SPONIFY !!!<br>The ultimate bridge between sponsors 🏢 and influencers 🎥. We're not just a platform — we're the middle force ⚡ powering brand deals, collaborations, and sponsorships with zero hassle.
 
+
 ## 🌐 Socials:
 [![Instagram](https://img.shields.io/badge/Instagram-%23E4405F.svg?logo=Instagram&logoColor=white)](https://instagram.com/https://www.instagram.com/sponofy?utm_source=qr&igsh=MXY0aDc4ZnVmNGV1eQ==) [![LinkedIn](https://img.shields.io/badge/LinkedIn-%230077B5.svg?logo=linkedin&logoColor=white)](https://linkedin.com/in/https://www.linkedin.com/in/sponofy-4208b3356?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app) [![X](https://img.shields.io/badge/X-black.svg?logo=X&logoColor=white)](https://x.com/https://x.com/sponofy?t=jv723NGEEzaHN0oFOO-Bdw&s=08) [![YouTube](https://img.shields.io/badge/YouTube-%23FF0000.svg?logo=YouTube&logoColor=white)](https://youtube.com/@https://youtube.com/@sponofy?si=abkRBg1NwB2iP7ij) [![email](https://img.shields.io/badge/Email-D14836?logo=gmail&logoColor=white)](mailto:sponofyweb@gmail.com) 
 
